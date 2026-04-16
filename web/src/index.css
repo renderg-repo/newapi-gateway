@@ -156,13 +156,25 @@ code {
 }
 
 .sidebar-nav-item:hover {
-  background-color: rgba(var(--semi-blue-0), 0.08);
+  background-color: var(--semi-color-primary-light-default);
   color: var(--semi-color-primary);
 }
 
 .sidebar-nav-item-selected {
-  background-color: rgba(var(--semi-blue-0), 0.12);
+  background-color: var(--semi-color-primary-light-hover);
   color: var(--semi-color-primary);
+  font-weight: 500;
+}
+
+/* Dark mode: SpaceHPC sidebar nav colors */
+html.dark .sidebar-nav-item:hover {
+  background-color: rgba(33, 86, 179, 0.15);
+  color: #2696ff;
+}
+
+html.dark .sidebar-nav-item-selected {
+  background-color: rgba(33, 86, 179, 0.2);
+  color: #2696ff;
   font-weight: 500;
 }
 
@@ -549,6 +561,14 @@ html.dark .sbg-variant-green {
   background: transparent;
 }
 
+html.dark .semi-table-body::-webkit-scrollbar-thumb {
+  background: #2156b3;
+}
+
+html.dark .semi-table-body::-webkit-scrollbar-thumb:hover {
+  background: #3070e1;
+}
+
 /* 侧边抽屉滚动条样式 */
 .semi-sidesheet-body::-webkit-scrollbar {
   width: 6px;
@@ -566,6 +586,14 @@ html.dark .sbg-variant-green {
 
 .semi-sidesheet-body::-webkit-scrollbar-track {
   background: transparent;
+}
+
+html.dark .semi-sidesheet-body::-webkit-scrollbar-thumb {
+  background: #2156b3;
+}
+
+html.dark .semi-sidesheet-body::-webkit-scrollbar-thumb:hover {
+  background: #3070e1;
 }
 
 /* 隐藏内容区域滚动条 */
@@ -870,6 +898,14 @@ html.dark .with-pastel-balls::before {
   background: transparent;
 }
 
+html.dark .table-scroll-card .semi-card-body::-webkit-scrollbar-thumb {
+  background: #2156b3;
+}
+
+html.dark .table-scroll-card .semi-card-body::-webkit-scrollbar-thumb:hover {
+  background: #3070e1;
+}
+
 @media (max-width: 767px) {
   .table-scroll-card {
     height: calc(100vh - 77px);
@@ -966,21 +1002,7 @@ html.dark .with-pastel-balls::before {
 }
 
 /* ==================== 自定义圆角样式 ==================== */
-.semi-radio,
-.semi-tagInput,
-.semi-input-textarea-wrapper,
-.semi-navigation-sub-title,
-.semi-chat-inputBox-sendButton,
-.semi-page-item,
-.semi-navigation-item,
-.semi-tag-closable,
-.semi-input-wrapper,
-.semi-tabs-tab-button,
-.semi-select,
-.semi-button,
-.semi-datepicker-range-input {
-  border-radius: 10px !important;
-}
+/* Note: SpaceHPC theme handles component-specific border radii in spacehpc-theme.css */
 
 @keyframes slideInLeft {
   from {
