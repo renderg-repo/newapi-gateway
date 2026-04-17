@@ -188,7 +188,8 @@ html.dark .semi-button-secondary:not(.semi-button-disabled):hover {
   color: #ffffff !important;
 }
 
-body[theme-mode='dark'] .semi-button-secondary:not(.semi-button-disabled):active,
+body[theme-mode='dark']
+  .semi-button-secondary:not(.semi-button-disabled):active,
 html.dark .semi-button-secondary:not(.semi-button-disabled):active {
   background-color: #0b1320 !important;
   border-color: #0b1320 !important;
@@ -261,7 +262,8 @@ html.dark .semi-button-borderless {
   color: rgba(255, 255, 255, 0.85) !important;
 }
 
-body[theme-mode='dark'] .semi-button-borderless:not(.semi-button-disabled):hover,
+body[theme-mode='dark']
+  .semi-button-borderless:not(.semi-button-disabled):hover,
 html.dark .semi-button-borderless:not(.semi-button-disabled):hover {
   background-color: rgba(255, 255, 255, 0.08) !important;
 }
@@ -338,7 +340,8 @@ html.dark .semi-select-option-selected {
   color: rgba(255, 255, 255, 0.85) !important;
 }
 
-body[theme-mode='dark'] .semi-select-option:hover:not(.semi-select-option-selected),
+body[theme-mode='dark']
+  .semi-select-option:hover:not(.semi-select-option-selected),
 html.dark .semi-select-option:hover:not(.semi-select-option-selected) {
   background-color: #2156b3 !important;
   color: #ffffff !important;
@@ -358,7 +361,10 @@ html.dark .semi-table {
   color: rgba(255, 255, 255, 0.85) !important;
 }
 
-body[theme-mode='dark'] .semi-table-thead > .semi-table-row > .semi-table-row-head,
+body[theme-mode='dark']
+  .semi-table-thead
+  > .semi-table-row
+  > .semi-table-row-head,
 html.dark .semi-table-thead > .semi-table-row > .semi-table-row-head {
   background-color: #0b1320 !important;
   color: rgba(255, 255, 255, 0.45) !important;
@@ -366,12 +372,18 @@ html.dark .semi-table-thead > .semi-table-row > .semi-table-row-head {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
-body[theme-mode='dark'] .semi-table-tbody > .semi-table-row:hover > .semi-table-row-cell,
+body[theme-mode='dark']
+  .semi-table-tbody
+  > .semi-table-row:hover
+  > .semi-table-row-cell,
 html.dark .semi-table-tbody > .semi-table-row:hover > .semi-table-row-cell {
   background-color: #26303e !important;
 }
 
-body[theme-mode='dark'] .semi-table-tbody > .semi-table-row > .semi-table-row-cell,
+body[theme-mode='dark']
+  .semi-table-tbody
+  > .semi-table-row
+  > .semi-table-row-cell,
 html.dark .semi-table-tbody > .semi-table-row > .semi-table-row-cell {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
@@ -399,7 +411,8 @@ body[theme-mode='dark'] .semi-modal-content,
 html.dark .semi-modal-content {
   background-color: #1d222a !important;
   border-radius: 10px !important;
-  box-shadow: 0px 3px 6px -1px rgba(0, 0, 0, 0.48),
+  box-shadow:
+    0px 3px 6px -1px rgba(0, 0, 0, 0.48),
     0px 6px 16px 2px rgba(0, 0, 0, 0.32),
     0px 9px 28px 8px rgba(0, 0, 0, 0.2) !important;
 }
@@ -427,7 +440,8 @@ html.dark .semi-tooltip-content {
   box-shadow: 0px 4px 20px 0px rgba(0, 0, 0, 0.45) !important;
 }
 
-body[theme-mode='dark'] .semi-dropdown-item:hover:not(.semi-dropdown-item-active),
+body[theme-mode='dark']
+  .semi-dropdown-item:hover:not(.semi-dropdown-item-active),
 html.dark .semi-dropdown-item:hover:not(.semi-dropdown-item-active) {
   background-color: #2156b3 !important;
   color: #ffffff !important;
@@ -805,7 +819,9 @@ html.dark .auth-page-card .semi-input-textarea-wrapper:hover {
 
 body[theme-mode='dark'] .auth-page-card .semi-input-wrapper-focus,
 html.dark .auth-page-card .semi-input-wrapper-focus,
-body[theme-mode='dark'] .auth-page-card .semi-input-wrapper.semi-input-wrapper-focus,
+body[theme-mode='dark']
+  .auth-page-card
+  .semi-input-wrapper.semi-input-wrapper-focus,
 html.dark .auth-page-card .semi-input-wrapper.semi-input-wrapper-focus,
 body[theme-mode='dark'] .auth-page-card .semi-input-textarea-wrapper-focus,
 html.dark .auth-page-card .semi-input-textarea-wrapper-focus {
@@ -815,7 +831,9 @@ html.dark .auth-page-card .semi-input-textarea-wrapper-focus {
 
 body[theme-mode='dark'] .auth-page-card .semi-input-wrapper-error,
 html.dark .auth-page-card .semi-input-wrapper-error,
-body[theme-mode='dark'] .auth-page-card .semi-input-wrapper.semi-input-wrapper-error,
+body[theme-mode='dark']
+  .auth-page-card
+  .semi-input-wrapper.semi-input-wrapper-error,
 html.dark .auth-page-card .semi-input-wrapper.semi-input-wrapper-error {
   border-bottom-color: #df444d !important;
   box-shadow: none !important;
@@ -823,8 +841,10 @@ html.dark .auth-page-card .semi-input-wrapper.semi-input-wrapper-error {
 
 body[theme-mode='dark'] .auth-page-card .semi-input-wrapper ::placeholder,
 html.dark .auth-page-card .semi-input-wrapper ::placeholder,
-body[theme-mode='dark'] .auth-page-card .semi-input-textarea-wrapper ::placeholder,
+body[theme-mode='dark']
+  .auth-page-card
+  .semi-input-textarea-wrapper
+  ::placeholder,
 html.dark .auth-page-card .semi-input-textarea-wrapper ::placeholder {
   color: rgba(255, 255, 255, 0.3) !important;
 }
-
