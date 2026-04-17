@@ -110,7 +110,13 @@ export default defineConfig({
                 setup: true,
                 footer_html: '',
                 server_address: 'http://localhost:3000',
-                HeaderNavModules: JSON.stringify({ pricing: false }),
+                HeaderNavModules: JSON.stringify({
+                  home: true,
+                  console: true,
+                  pricing: { enabled: true, requireAuth: false },
+                  docs: true,
+                  about: true,
+                }),
               }
             }));
             return true;
