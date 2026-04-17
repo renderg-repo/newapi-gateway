@@ -740,6 +740,15 @@ html.dark .Toastify__close-button:hover {
 /* ==================== Auth pages underline inputs ==================== */
 .auth-page-card .semi-form-field-label {
   display: none !important;
+  padding-top: 0 !important;
+}
+
+.auth-page-card .semi-form-field {
+  padding-top: 0 !important;
+}
+
+.auth-page-card .semi-form-field-main {
+  padding-top: 0 !important;
 }
 
 .auth-page-card .semi-input-wrapper,
@@ -749,6 +758,7 @@ html.dark .Toastify__close-button:hover {
   border-bottom: 1px solid rgba(0, 0, 0, 0.15) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
+  margin-top: 30px !important;
 }
 
 .auth-page-card .semi-input-wrapper:hover,
