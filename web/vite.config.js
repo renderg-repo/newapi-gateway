@@ -97,53 +97,6 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
-        bypass: (req, res, proxyOptions) => {
-          if (req.url === '/api/status') {
-            res.end(JSON.stringify({
-              success: true,
-              data: {
-                version: 'dev',
-                system_name: 'SpaceHPC',
-                logo: '/logo.png',
-                demo_site_enabled: false,
-                docs_link: 'https://docs.newapi.pro',
-                setup: true,
-                footer_html: '',
-                server_address: 'http://localhost:3000',
-                HeaderNavModules: JSON.stringify({
-                  home: true,
-                  console: true,
-                  pricing: { enabled: true, requireAuth: false },
-                  docs: true,
-                  about: true,
-                }),
-              }
-            }));
-            return true;
-          }
-          if (req.url === '/api/notice') {
-            res.end(JSON.stringify({ success: true, data: '' }));
-            return true;
-          }
-          if (req.url === '/api/home_page_content') {
-            res.end(JSON.stringify({ success: true, data: '' }));
-            return true;
-          }
-          if (req.url === '/api/user/self') {
-            res.end(JSON.stringify({
-              success: true,
-              data: {
-                id: 1,
-                username: 'dev',
-                role: 100,
-                group: 'default',
-                setting: JSON.stringify({ language: 'zh-CN' }),
-                sidebar_modules: {},
-              }
-            }));
-            return true;
-          }
-        },
       },
       '/mj': {
         target: 'http://localhost:3000',
