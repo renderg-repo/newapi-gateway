@@ -104,7 +104,7 @@ const PasswordResetForm = () => {
   }
 
   return (
-    <div className='relative overflow-hidden bg-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8'>
+    <div className='relative overflow-hidden bg-gray-100 dark:bg-[#1d222a] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8'>
       {/* 背景模糊晕染球 */}
       <div
         className='blur-ball blur-ball-indigo'
@@ -124,7 +124,7 @@ const PasswordResetForm = () => {
               </Title>
             </div>
 
-            <Card className='border-0 !rounded-2xl overflow-hidden'>
+            <Card className='border-0 !rounded-2xl overflow-hidden auth-page-card'>
               <div className='flex justify-center pt-6 pb-2'>
                 <Title heading={3} className='text-gray-800 dark:text-gray-200'>
                   {t('密码重置')}
@@ -134,7 +134,6 @@ const PasswordResetForm = () => {
                 <Form className='space-y-3'>
                   <Form.Input
                     field='email'
-                    label={t('邮箱')}
                     placeholder={t('请输入您的邮箱地址')}
                     name='email'
                     value={email}

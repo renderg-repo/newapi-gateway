@@ -87,7 +87,6 @@ const TwoFAVerification = ({ onSuccess, onBack, isModal = false }) => {
         <Form onSubmit={handleSubmit}>
           <Form.Input
             field='code'
-            label={useBackupCode ? '备用码' : '验证码'}
             placeholder={useBackupCode ? '请输入8位备用码' : '请输入6位验证码'}
             value={verificationCode}
             onChange={setVerificationCode}
@@ -159,7 +158,7 @@ const TwoFAVerification = ({ onSuccess, onBack, isModal = false }) => {
         minHeight: '60vh',
       }}
     >
-      <Card style={{ width: 400, padding: 24 }}>
+      <Card className='auth-page-card' style={{ width: 400, padding: 24 }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <Title heading={3}>两步验证</Title>
           <Paragraph type='secondary'>
@@ -170,7 +169,6 @@ const TwoFAVerification = ({ onSuccess, onBack, isModal = false }) => {
         <Form onSubmit={handleSubmit}>
           <Form.Input
             field='code'
-            label={useBackupCode ? '备用码' : '验证码'}
             placeholder={useBackupCode ? '请输入8位备用码' : '请输入6位验证码'}
             value={verificationCode}
             onChange={setVerificationCode}

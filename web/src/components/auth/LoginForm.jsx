@@ -511,7 +511,7 @@ const LoginForm = () => {
             </Title>
           </div>
 
-          <Card className='border-0 !rounded-2xl overflow-hidden'>
+          <Card className='border-0 !rounded-2xl overflow-hidden auth-page-card'>
             <div className='flex justify-center pt-6 pb-2'>
               <Title heading={3} className='text-gray-800 dark:text-gray-200'>
                 {t('登 录')}
@@ -725,7 +725,7 @@ const LoginForm = () => {
             <Title heading={3}>{systemName}</Title>
           </div>
 
-          <Card className='border-0 !rounded-2xl overflow-hidden'>
+          <Card className='border-0 !rounded-2xl overflow-hidden auth-page-card'>
             <div className='flex justify-center pt-6 pb-2'>
               <Title heading={3} className='text-gray-800 dark:text-gray-200'>
                 {t('登 录')}
@@ -747,7 +747,6 @@ const LoginForm = () => {
               <Form className='space-y-3'>
                 <Form.Input
                   field='username'
-                  label={t('用户名或邮箱')}
                   placeholder={t('请输入您的用户名或邮箱地址')}
                   name='username'
                   onChange={(value) => handleChange('username', value)}
@@ -756,7 +755,6 @@ const LoginForm = () => {
 
                 <Form.Input
                   field='password'
-                  label={t('密码')}
                   placeholder={t('请输入您的密码')}
                   name='password'
                   mode='password'
@@ -898,7 +896,6 @@ const LoginForm = () => {
           <Form.Input
             field='wechat_verification_code'
             placeholder={t('验证码')}
-            label={t('验证码')}
             value={inputs.wechat_verification_code}
             onChange={(value) =>
               handleChange('wechat_verification_code', value)

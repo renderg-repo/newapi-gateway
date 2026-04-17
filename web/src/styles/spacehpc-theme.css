@@ -736,3 +736,85 @@ body[theme-mode='dark'] .Toastify__close-button:hover,
 html.dark .Toastify__close-button:hover {
   color: rgba(255, 255, 255, 0.85) !important;
 }
+
+/* ==================== Auth pages underline inputs ==================== */
+.auth-page-card .semi-form-field-label {
+  display: none !important;
+}
+
+.auth-page-card .semi-input-wrapper,
+.auth-page-card .semi-input-textarea-wrapper {
+  background-color: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.15) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.auth-page-card .semi-input-wrapper:hover,
+.auth-page-card .semi-input-textarea-wrapper:hover {
+  border-bottom-color: rgba(0, 0, 0, 0.35) !important;
+}
+
+.auth-page-card .semi-input-wrapper-focus,
+.auth-page-card .semi-input-wrapper.semi-input-wrapper-focus,
+.auth-page-card .semi-input-textarea-wrapper-focus {
+  border-bottom-color: #2156b3 !important;
+  box-shadow: none !important;
+}
+
+.auth-page-card .semi-input-wrapper-error,
+.auth-page-card .semi-input-wrapper.semi-input-wrapper-error {
+  border-bottom-color: #df444d !important;
+  box-shadow: none !important;
+}
+
+.auth-page-card .semi-input-wrapper ::placeholder,
+.auth-page-card .semi-input-textarea-wrapper ::placeholder {
+  color: rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Dark mode auth page inputs */
+body[theme-mode='dark'] .auth-page-card .semi-input-wrapper,
+html.dark .auth-page-card .semi-input-wrapper,
+body[theme-mode='dark'] .auth-page-card .semi-input-textarea-wrapper,
+html.dark .auth-page-card .semi-input-textarea-wrapper {
+  background-color: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+body[theme-mode='dark'] .auth-page-card .semi-input-wrapper:hover,
+html.dark .auth-page-card .semi-input-wrapper:hover,
+body[theme-mode='dark'] .auth-page-card .semi-input-textarea-wrapper:hover,
+html.dark .auth-page-card .semi-input-textarea-wrapper:hover {
+  border-bottom-color: #2156b3 !important;
+}
+
+body[theme-mode='dark'] .auth-page-card .semi-input-wrapper-focus,
+html.dark .auth-page-card .semi-input-wrapper-focus,
+body[theme-mode='dark'] .auth-page-card .semi-input-wrapper.semi-input-wrapper-focus,
+html.dark .auth-page-card .semi-input-wrapper.semi-input-wrapper-focus,
+body[theme-mode='dark'] .auth-page-card .semi-input-textarea-wrapper-focus,
+html.dark .auth-page-card .semi-input-textarea-wrapper-focus {
+  border-bottom-color: #2696ff !important;
+  box-shadow: none !important;
+}
+
+body[theme-mode='dark'] .auth-page-card .semi-input-wrapper-error,
+html.dark .auth-page-card .semi-input-wrapper-error,
+body[theme-mode='dark'] .auth-page-card .semi-input-wrapper.semi-input-wrapper-error,
+html.dark .auth-page-card .semi-input-wrapper.semi-input-wrapper-error {
+  border-bottom-color: #df444d !important;
+  box-shadow: none !important;
+}
+
+body[theme-mode='dark'] .auth-page-card .semi-input-wrapper ::placeholder,
+html.dark .auth-page-card .semi-input-wrapper ::placeholder,
+body[theme-mode='dark'] .auth-page-card .semi-input-textarea-wrapper ::placeholder,
+html.dark .auth-page-card .semi-input-textarea-wrapper ::placeholder {
+  color: rgba(255, 255, 255, 0.3) !important;
+}
+

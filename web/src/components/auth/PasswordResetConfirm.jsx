@@ -104,7 +104,7 @@ const PasswordResetConfirm = () => {
   }
 
   return (
-    <div className='relative overflow-hidden bg-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8'>
+    <div className='relative overflow-hidden bg-gray-100 dark:bg-[#1d222a] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8'>
       {/* 背景模糊晕染球 */}
       <div
         className='blur-ball blur-ball-indigo'
@@ -124,7 +124,7 @@ const PasswordResetConfirm = () => {
               </Title>
             </div>
 
-            <Card className='border-0 !rounded-2xl overflow-hidden'>
+            <Card className='border-0 !rounded-2xl overflow-hidden auth-page-card'>
               <div className='flex justify-center pt-6 pb-2'>
                 <Title heading={3} className='text-gray-800 dark:text-gray-200'>
                   {t('密码重置确认')}
@@ -149,7 +149,6 @@ const PasswordResetConfirm = () => {
                 >
                   <Form.Input
                     field='email'
-                    label={t('邮箱')}
                     name='email'
                     disabled={true}
                     prefix={<IconMail />}
@@ -159,7 +158,6 @@ const PasswordResetConfirm = () => {
                   {newPassword && (
                     <Form.Input
                       field='newPassword'
-                      label={t('新密码')}
                       name='newPassword'
                       disabled={true}
                       prefix={<IconLock />}

@@ -402,7 +402,7 @@ const RegisterForm = () => {
             </Title>
           </div>
 
-          <Card className='border-0 !rounded-2xl overflow-hidden'>
+          <Card className='border-0 !rounded-2xl overflow-hidden auth-page-card'>
             <div className='flex justify-center pt-6 pb-2'>
               <Title heading={3} className='text-gray-800 dark:text-gray-200'>
                 {t('注 册')}
@@ -565,7 +565,7 @@ const RegisterForm = () => {
             </Title>
           </div>
 
-          <Card className='border-0 !rounded-2xl overflow-hidden'>
+          <Card className='border-0 !rounded-2xl overflow-hidden auth-page-card'>
             <div className='flex justify-center pt-6 pb-2'>
               <Title heading={3} className='text-gray-800 dark:text-gray-200'>
                 {t('注 册')}
@@ -575,7 +575,6 @@ const RegisterForm = () => {
               <Form className='space-y-3'>
                 <Form.Input
                   field='username'
-                  label={t('用户名')}
                   placeholder={t('请输入用户名')}
                   name='username'
                   onChange={(value) => handleChange('username', value)}
@@ -584,7 +583,6 @@ const RegisterForm = () => {
 
                 <Form.Input
                   field='password'
-                  label={t('密码')}
                   placeholder={t('输入密码，最短 8 位，最长 20 位')}
                   name='password'
                   mode='password'
@@ -594,7 +592,6 @@ const RegisterForm = () => {
 
                 <Form.Input
                   field='password2'
-                  label={t('确认密码')}
                   placeholder={t('确认密码')}
                   name='password2'
                   mode='password'
@@ -606,7 +603,6 @@ const RegisterForm = () => {
                   <>
                     <Form.Input
                       field='email'
-                      label={t('邮箱')}
                       placeholder={t('输入邮箱地址')}
                       name='email'
                       type='email'
@@ -626,7 +622,6 @@ const RegisterForm = () => {
                     />
                     <Form.Input
                       field='verification_code'
-                      label={t('验证码')}
                       placeholder={t('输入验证码')}
                       name='verification_code'
                       onChange={(value) =>
@@ -758,7 +753,6 @@ const RegisterForm = () => {
           <Form.Input
             field='wechat_verification_code'
             placeholder={t('验证码')}
-            label={t('验证码')}
             value={inputs.wechat_verification_code}
             onChange={(value) =>
               handleChange('wechat_verification_code', value)
@@ -770,7 +764,7 @@ const RegisterForm = () => {
   };
 
   return (
-    <div className='relative overflow-hidden bg-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8'>
+    <div className='relative overflow-hidden bg-gray-100 dark:bg-[#1d222a] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8'>
       {/* 背景模糊晕染球 */}
       <div
         className='blur-ball blur-ball-indigo'
