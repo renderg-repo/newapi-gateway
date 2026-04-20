@@ -1041,6 +1041,10 @@ html.dark .semi-button.hero-primary-btn:hover {
   color: rgba(255, 255, 255, 0.65) !important;
 }
 
+.text-black-65 {
+  color: rgba(0, 0, 0, 0.65) !important;
+}
+
 /* ==================== 自定义圆角样式 ==================== */
 /* Note: SpaceHPC theme handles component-specific border radii in spacehpc-theme.css */
 
@@ -1065,6 +1069,21 @@ html.dark .semi-button.hero-primary-btn:hover {
     transform: translateX(0);
     opacity: 1;
   }
+}
+
+/* 供应商图标在暗色模式下提亮 */
+html.dark .provider-icon-bright {
+  filter: brightness(1.8);
+}
+
+/* 亮色模式 Hero 发光文字 */
+html:not(.dark) .hero-glow-text {
+  color: #111827;
+  text-shadow:
+    0 0 10px rgba(38, 150, 255, 0.3),
+    0 0 20px rgba(38, 150, 255, 0.2),
+    0 0 40px rgba(38, 150, 255, 0.1),
+    0 0 80px rgba(38, 150, 255, 0.05);
 }
 
 .ec-dbcd0a3c01b55203 {

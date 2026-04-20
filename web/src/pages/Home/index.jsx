@@ -74,6 +74,7 @@ const Home = () => {
   const [noticeVisible, setNoticeVisible] = useState(false);
   const isMobile = useIsMobile();
   const isDemoSiteMode = statusState?.status?.demo_site_enabled || false;
+  const isDark = actualTheme === 'dark';
   const docsLink = statusState?.status?.docs_link || '';
   const serverAddress =
     statusState?.status?.server_address || `${window.location.origin}`;
@@ -157,8 +158,8 @@ const Home = () => {
       />
       {homePageContentLoaded && homePageContent === '' ? (
         <div className='w-full overflow-x-hidden'>
-          {/* Banner 部分 - SpaceHPC style dark hero */}
-          <div className='w-full min-h-[500px] md:min-h-[600px] lg:min-h-[700px] relative overflow-x-hidden bg-[#0b1320]'>
+          {/* Banner 部分 - SpaceHPC style hero */}
+          <div className={`w-full min-h-[500px] md:min-h-[600px] lg:min-h-[700px] relative overflow-x-hidden ${isDark ? 'bg-[#0b1320]' : 'bg-[#f8fafc]'}`}>
             <div className='flex items-center justify-center h-full px-4 py-20 md:py-24 lg:py-32 pt-24'>
               {/* 居中内容区 */}
               <div className='flex flex-col items-center justify-center text-center max-w-4xl mx-auto'>
@@ -174,7 +175,8 @@ const Home = () => {
                 </div>
                 <div className='flex flex-col items-center justify-center mb-6 md:mb-8'>
                   <h1
-                    className={`text-3xl md:text-4xl lg:text-5xl font-bold text-white-65 leading-tight ${isChinese ? 'tracking-wide md:tracking-wider' : ''}`}
+                    className={`text-3xl md:text-4xl lg:text-5xl font-bold leading-tight ${isChinese ? 'tracking-wide md:tracking-wider' : ''}`}
+                    style={{ color: isDark ? '#ffffff' : '#111827' }}
                   >
                     <>
                       {t('统一的')}
@@ -182,7 +184,7 @@ const Home = () => {
                       {t('大模型接口网关')}
                     </>
                   </h1>
-                  <p className='text-base md:text-lg text-white-65 mt-4 md:mt-6 max-w-xl'>
+                  <p className={`text-base md:text-lg mt-4 md:mt-6 max-w-xl ${isDark ? 'text-white-65' : 'text-black-65'}`}>
                     {t('更好的价格，更好的稳定性，只需要将模型基址替换为：')}
                   </p>
                   {/* BASE URL 与端点选择 */}
@@ -190,7 +192,7 @@ const Home = () => {
                     <Input
                       readonly
                       value={serverAddress}
-                      className='flex-1 !rounded-full !bg-[#1a2940] !border-[#26303e] text-white'
+                      className={`flex-1 !rounded-full ${isDark ? '!bg-[#1a2940] !border-[#26303e] text-white' : '!bg-white !border-gray-200 !text-gray-900'}`}
                       size={isMobile ? 'default' : 'large'}
                       suffix={
                         <div className='flex items-center gap-2'>
@@ -207,9 +209,8 @@ const Home = () => {
                             />
                           </ScrollList>
                           <Button
-                            type='primary'
                             onClick={handleCopyBaseURL}
-                            icon={<IconCopy />}
+                            icon={<IconCopy style={{ color: '#ffffff' }} />}
                             className='!rounded-full !bg-[#2156b3] hover:!bg-[#3070e1]'
                           />
                         </div>
@@ -223,7 +224,8 @@ const Home = () => {
                   <Link to='/console'>
                     <Button
                       size={isMobile ? 'default' : 'large'}
-                      className='hero-primary-btn !rounded-full px-8 py-2'
+                      className={`!rounded-full px-8 py-2 ${isDark ? 'hero-primary-btn' : '!bg-[#2156b3] hover:!bg-[#3070e1]'}`}
+                      style={isDark ? undefined : { color: '#ffffff' }}
                       icon={<IconPlay />}
                     >
                       {t('获取密钥')}
@@ -232,7 +234,7 @@ const Home = () => {
                   {isDemoSiteMode && statusState?.status?.version ? (
                     <Button
                       size={isMobile ? 'default' : 'large'}
-                      className='flex items-center !rounded-full px-6 py-2 !bg-transparent !border !border-white/20 !text-white hover:!bg-white/10'
+                      className={`flex items-center !rounded-full px-6 py-2 !bg-transparent !border ${isDark ? '!border-white/20 !text-white hover:!bg-white/10' : '!border-gray-300 !text-gray-700 hover:!bg-gray-100'}`}
                       icon={<IconGithubLogo />}
                       onClick={() =>
                         window.open(
@@ -247,7 +249,7 @@ const Home = () => {
                     docsLink && (
                       <Button
                         size={isMobile ? 'default' : 'large'}
-                        className='flex items-center !rounded-full px-6 py-2 !bg-transparent !border !border-white/20 !text-white hover:!bg-white/10'
+                        className={`flex items-center !rounded-full px-6 py-2 !bg-transparent !border ${isDark ? '!border-white/20 !text-white hover:!bg-white/10' : '!border-gray-300 !text-gray-700 hover:!bg-gray-100'}`}
                         icon={<IconFile />}
                         onClick={() => window.open(docsLink, '_blank')}
                       >
@@ -260,19 +262,19 @@ const Home = () => {
                 {/* 框架兼容性图标 */}
                 <div className='mt-12 md:mt-16 lg:mt-20 w-full'>
                   <div className='flex items-center mb-6 md:mb-8 justify-center'>
-                    <Text className='text-lg md:text-xl lg:text-2xl font-light text-white-65'>
+                    <Text className={`text-lg md:text-xl lg:text-2xl font-light ${isDark ? 'text-white-65' : 'text-black-65'}`}>
                       {t('支持众多的大模型供应商')}
                     </Text>
                   </div>
                   <div className='flex flex-wrap items-center justify-center gap-3 sm:gap-4 md:gap-6 lg:gap-8 max-w-5xl mx-auto px-4'>
-                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
-                      <Moonshot size={40} color='rgba(255, 255, 255, 0.65)'/>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center provider-icon-bright'>
+                      <Moonshot size={40} color={isDark ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.65)'}/>
                     </div>
-                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
-                      <OpenAI size={40} color='rgba(255, 255, 255, 0.65)'/>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center provider-icon-bright'>
+                      <OpenAI size={40} color={isDark ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.65)'}/>
                     </div>
-                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
-                      <XAI size={40} color='rgba(255, 255, 255, 0.65)'/>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center provider-icon-bright'>
+                      <XAI size={40} color={isDark ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.65)'}/>
                     </div>
                     <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
                       <Zhipu.Color size={40} />
@@ -289,8 +291,8 @@ const Home = () => {
                     <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
                       <Gemini.Color size={40} />
                     </div>
-                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
-                      <Suno size={40} color='rgba(255, 255, 255, 0.65)'/>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center provider-icon-bright'>
+                      <Suno size={40} color={isDark ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.65)'}/>
                     </div>
                     <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
                       <Minimax.Color size={40} />
@@ -310,11 +312,11 @@ const Home = () => {
                     <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
                       <Qwen.Color size={40} />
                     </div>
-                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
-                      <Midjourney size={40} color='rgba(255, 255, 255, 0.65)'/>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center provider-icon-bright'>
+                      <Midjourney size={40} color={isDark ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.65)'}/>
                     </div>
-                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
-                      <Grok size={40} color='rgba(255, 255, 255, 0.65)'/>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center provider-icon-bright'>
+                      <Grok size={40} color={isDark ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.65)'}/>
                     </div>
                     <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
                       <AzureAI.Color size={40} />
@@ -326,7 +328,7 @@ const Home = () => {
                       <Xinference.Color size={40} />
                     </div>
                     <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
-                      <Typography.Text className='!text-lg sm:!text-xl md:!text-2xl lg:!text-3xl font-bold text-white-65'>
+                      <Typography.Text className={`!text-lg sm:!text-xl md:!text-2xl lg:!text-3xl font-bold ${isDark ? 'text-white-65' : 'text-black-65'}`}>
                         30+
                       </Typography.Text>
                     </div>
