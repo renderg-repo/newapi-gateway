@@ -361,6 +361,9 @@ func EpayNotify(c *gin.Context) {
 				log.Printf("易支付回调更新用户失败: %v", topUp)
 				return
 			}
+			if model.OnTopUpSuccess != nil {
+				model.OnTopUpSuccess(topUp, quotaToAdd)
+			}
 			log.Printf("易支付回调更新用户成功 %v", topUp)
 			model.RecordLog(topUp.UserId, model.LogTypeTopup, fmt.Sprintf("使用在线充值成功，充值金额: %v，支付金额：%f", logger.LogQuota(quotaToAdd), topUp.Money))
 		}

@@ -25,6 +25,9 @@ type TopUp struct {
 
 var ErrPaymentMethodMismatch = errors.New("payment method mismatch")
 
+// OnTopUpSuccess 充值成功后的回调，由 service/hook.go 在 init() 中注册
+var OnTopUpSuccess func(topUp *TopUp, quota int)
+
 func (topUp *TopUp) Insert() error {
 	var err error
 	err = DB.Create(topUp).Error
@@ -103,6 +106,10 @@ func Recharge(referenceId string, customerId string) (err error) {
 	if err != nil {
 		common.SysError("topup failed: " + err.Error())
 		return errors.New("充值失败，请稍后重试")
+	}
+
+	if OnTopUpSuccess != nil {
+		OnTopUpSuccess(topUp, int(quota))
 	}
 
 	RecordLog(topUp.UserId, LogTypeTopup, fmt.Sprintf("使用在线充值成功，充值金额: %v，支付金额：%d", logger.FormatQuota(int(quota)), topUp.Amount))
@@ -255,9 +262,10 @@ func ManualCompleteTopUp(tradeNo string) error {
 	var userId int
 	var quotaToAdd int
 	var payMoney float64
+	var topUp *TopUp
 
 	err := DB.Transaction(func(tx *gorm.DB) error {
-		topUp := &TopUp{}
+		topUp = &TopUp{}
 		// 行级锁，避免并发补单
 		if err := tx.Set("gorm:query_option", "FOR UPDATE").Where(refCol+" = ?", tradeNo).First(topUp).Error; err != nil {
 			return errors.New("充值订单不存在")
@@ -306,6 +314,10 @@ func ManualCompleteTopUp(tradeNo string) error {
 
 	if err != nil {
 		return err
+	}
+
+	if OnTopUpSuccess != nil {
+		OnTopUpSuccess(topUp, quotaToAdd)
 	}
 
 	// 事务外记录日志，避免阻塞
@@ -382,6 +394,10 @@ func RechargeCreem(referenceId string, customerEmail string, customerName string
 		return errors.New("充值失败，请稍后重试")
 	}
 
+	if OnTopUpSuccess != nil {
+		OnTopUpSuccess(topUp, int(quota))
+	}
+
 	RecordLog(topUp.UserId, LogTypeTopup, fmt.Sprintf("使用Creem充值成功，充值额度: %v，支付金额：%.2f", quota, topUp.Money))
 
 	return nil
@@ -441,6 +457,10 @@ func RechargeWaffo(tradeNo string) (err error) {
 	if err != nil {
 		common.SysError("waffo topup failed: " + err.Error())
 		return errors.New("充值失败，请稍后重试")
+	}
+
+	if OnTopUpSuccess != nil {
+		OnTopUpSuccess(topUp, quotaToAdd)
 	}
 
 	if quotaToAdd > 0 {
