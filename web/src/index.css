@@ -1000,6 +1000,47 @@ html.dark .table-scroll-card .semi-card-body::-webkit-scrollbar-thumb:hover {
   gap: 0.25rem;
 }
 
+/* ==================== Hero 区域发光文字 ==================== */
+.hero-glow-text {
+  color: #ffffff;
+  text-shadow:
+    0 0 10px rgba(38, 150, 255, 0.6),
+    0 0 20px rgba(38, 150, 255, 0.4),
+    0 0 40px rgba(38, 150, 255, 0.2),
+    0 0 80px rgba(38, 150, 255, 0.1);
+  letter-spacing: 0.1em;
+}
+
+/* ==================== Hero 主按钮（白色 pill） ==================== */
+.hero-primary-btn {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #ffffff !important;
+}
+
+.hero-primary-btn:hover {
+  background-color: #f3f4f6 !important;
+  border-color: #f3f4f6 !important;
+}
+
+body[theme-mode='dark'] .semi-button.hero-primary-btn,
+html.dark .semi-button.hero-primary-btn {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #ffffff !important;
+}
+
+body[theme-mode='dark'] .semi-button.hero-primary-btn:hover,
+html.dark .semi-button.hero-primary-btn:hover {
+  background-color: #f3f4f6 !important;
+  border-color: #f3f4f6 !important;
+}
+
+/* ==================== Home provider icons dark mode fix ==================== */
+.provider-icon-bright {
+  filter: brightness(1.6) contrast(1.1);
+}
+
 /* ==================== 自定义圆角样式 ==================== */
 /* Note: SpaceHPC theme handles component-specific border radii in spacehpc-theme.css */
 
