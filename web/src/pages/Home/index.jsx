@@ -159,16 +159,16 @@ const Home = () => {
       {homePageContentLoaded && homePageContent === '' ? (
         <div className='w-full overflow-x-hidden'>
           {/* Banner 部分 - SpaceHPC style hero */}
-          <div className={`w-full min-h-[500px] md:min-h-[600px] lg:min-h-[700px] relative overflow-x-hidden ${isDark ? 'bg-[#0b1320]' : 'bg-[#f8fafc]'}`}>
+          <div className={`w-full min-h-[max(500px,calc(100dvh-64px))] relative overflow-x-hidden ${isDark ? 'bg-[#0b1320]' : 'bg-[#f8fafc]'}`}>
             <div className='flex items-center justify-center h-full px-4 py-20 md:py-24 lg:py-32 pt-24'>
               {/* 居中内容区 */}
               <div className='flex flex-col items-center justify-center text-center max-w-4xl mx-auto'>
                 {/* Logo */}
-                <img
+                {/* <img
                   src='/logo.png'
                   alt='New API'
                   className='w-20 h-20 md:w-28 md:h-28 lg:w-36 lg:h-36 mb-4 md:mb-6 object-contain drop-shadow-[0_0_30px_rgba(33,86,179,0.4)]'
-                />
+                /> */}
                 {/* 发光品牌名 */}
                 <div className='hero-glow-text text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6'>
                   New API
