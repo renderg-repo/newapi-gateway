@@ -1036,9 +1036,9 @@ html.dark .semi-button.hero-primary-btn:hover {
   border-color: #f3f4f6 !important;
 }
 
-/* ==================== Home provider icons dark mode fix ==================== */
-.provider-icon-bright {
-  filter: brightness(1.6) contrast(1.1);
+/* ==================== 常用色值工具类 ==================== */
+.text-white-65 {
+  color: rgba(255, 255, 255, 0.65) !important;
 }
 
 /* ==================== 自定义圆角样式 ==================== */
