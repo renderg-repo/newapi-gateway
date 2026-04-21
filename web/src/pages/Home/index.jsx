@@ -237,7 +237,7 @@ const Home = () => {
         <div className='w-full h-full overflow-hidden'>
           {/* ==================== Hero Section ==================== */}
           <div
-            className={`w-full h-[calc(100dvh-64px)] relative overflow-hidden flex flex-col ${isDark ? 'home-hero-dark' : 'home-hero-light'}`}
+            className={`w-full h-full relative overflow-hidden flex flex-col ${isDark ? 'home-hero-dark' : 'home-hero-light'}`}
           >
             {/* ---- Mesh Gradient Background ---- */}
             <div className='mesh-gradient-bg' aria-hidden='true' />
