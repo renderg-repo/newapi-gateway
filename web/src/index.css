@@ -1353,21 +1353,25 @@ html:not(.dark) .gradient-text-apple {
   }
 }
 
-/* Logo — show brand colors by default, subtle opacity */
+/* Logo — monochrome silver by default, brand color on hover */
 .logo-item-wrapper {
-  opacity: 0.65;
+  filter: grayscale(1) brightness(1.5);
+  opacity: 0.55;
   transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .logo-item-wrapper:hover {
+  filter: grayscale(0) brightness(1);
   opacity: 1;
 }
 
 html:not(.dark) .logo-item-wrapper {
-  opacity: 0.7;
+  filter: grayscale(1) brightness(0.55);
+  opacity: 0.45;
 }
 
 html:not(.dark) .logo-item-wrapper:hover {
+  filter: grayscale(0) brightness(1);
   opacity: 1;
 }
 
@@ -1501,11 +1505,13 @@ html:not(.dark) .url-box-glass:hover {
 
 /* ---- Logo Item — Hover Glow ---- */
 .logo-item-wrapper:hover {
+  filter: grayscale(0) brightness(1);
   opacity: 1;
   background: radial-gradient(circle at center, rgba(255, 255, 255, 0.07) 0%, transparent 70%);
 }
 
 html:not(.dark) .logo-item-wrapper:hover {
+  filter: grayscale(0) brightness(1);
   opacity: 1;
   background: radial-gradient(circle at center, rgba(255, 255, 255, 0.85) 0%, transparent 70%);
 }
