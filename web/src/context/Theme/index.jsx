@@ -39,9 +39,9 @@ const getSystemTheme = () => {
   if (typeof window !== 'undefined' && window.matchMedia) {
     return window.matchMedia('(prefers-color-scheme: dark)').matches
       ? 'dark'
-      : 'light';
+      : 'dark';
   }
-  return 'light';
+  return 'dark';
 };
 
 export const ThemeProvider = ({ children }) => {
