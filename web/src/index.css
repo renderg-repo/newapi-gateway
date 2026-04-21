@@ -1004,11 +1004,10 @@ html.dark .table-scroll-card .semi-card-body::-webkit-scrollbar-thumb:hover {
 .hero-glow-text {
   color: #ffffff;
   text-shadow:
-    0 0 10px rgba(38, 150, 255, 0.6),
-    0 0 20px rgba(38, 150, 255, 0.4),
-    0 0 40px rgba(38, 150, 255, 0.2),
-    0 0 80px rgba(38, 150, 255, 0.1);
-  letter-spacing: 0.1em;
+    0 0 10px rgba(139, 92, 246, 0.4),
+    0 0 20px rgba(139, 92, 246, 0.25),
+    0 0 40px rgba(139, 92, 246, 0.1);
+  letter-spacing: 0.15em;
 }
 
 /* ==================== Hero 主按钮（白色 pill） ==================== */
@@ -1080,10 +1079,9 @@ html.dark .provider-icon-bright {
 html:not(.dark) .hero-glow-text {
   color: #111827;
   text-shadow:
-    0 0 10px rgba(38, 150, 255, 0.3),
-    0 0 20px rgba(38, 150, 255, 0.2),
-    0 0 40px rgba(38, 150, 255, 0.1),
-    0 0 80px rgba(38, 150, 255, 0.05);
+    0 0 10px rgba(139, 92, 246, 0.2),
+    0 0 20px rgba(139, 92, 246, 0.12),
+    0 0 40px rgba(139, 92, 246, 0.06);
 }
 
 .ec-dbcd0a3c01b55203 {
@@ -1094,7 +1092,7 @@ html:not(.dark) .hero-glow-text {
 
 /* Base backgrounds */
 .home-hero-dark {
-  background-color: #0a0f1a;
+  background-color: #050505;
 }
 
 .home-hero-light {
@@ -1112,11 +1110,9 @@ html:not(.dark) .hero-glow-text {
 
 .home-hero-dark .mesh-gradient-bg {
   background:
-    radial-gradient(ellipse 80% 60% at 20% 30%, rgba(30, 27, 75, 0.55) 0%, transparent 60%),
-    radial-gradient(ellipse 70% 70% at 80% 20%, rgba(76, 29, 149, 0.35) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 50% at 50% 80%, rgba(112, 26, 117, 0.30) 0%, transparent 50%),
-    radial-gradient(ellipse 50% 40% at 70% 60%, rgba(33, 86, 179, 0.25) 0%, transparent 50%),
-    radial-gradient(ellipse 90% 50% at 10% 90%, rgba(59, 7, 100, 0.20) 0%, transparent 55%);
+    radial-gradient(ellipse 80% 60% at 50% 35%, rgba(139, 92, 246, 0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 30% 70%, rgba(124, 58, 237, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 60% at 70% 65%, rgba(168, 85, 247, 0.05) 0%, transparent 55%);
   animation: mesh-shift 20s ease-in-out infinite alternate;
 }
 
@@ -1157,12 +1153,12 @@ html:not(.dark) .hero-glow-text {
   position: absolute;
   border-radius: 50%;
   background: currentColor;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.35);
   animation: particle-twinkle ease-in-out infinite;
 }
 
 .home-hero-light .particle-dot {
-  color: rgba(0, 0, 0, 0.15);
+  color: rgba(0, 0, 0, 0.12);
 }
 
 @keyframes particle-twinkle {
@@ -1179,12 +1175,12 @@ html:not(.dark) .hero-glow-text {
 /* ---- Glassmorphism Code Block ---- */
 .code-block-glass {
   position: relative;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.025);
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.06),
-    0 4px 24px rgba(0, 0, 0, 0.15);
+    inset 0 1px 1px rgba(255, 255, 255, 0.04),
+    0 4px 24px rgba(0, 0, 0, 0.2);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -1198,9 +1194,9 @@ html:not(.dark) .hero-glow-text {
 .home-hero-dark .code-block-glass:hover {
   border-color: rgba(255, 255, 255, 0.12);
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.08),
-    0 4px 24px rgba(0, 0, 0, 0.2),
-    0 0 20px rgba(38, 150, 255, 0.06);
+    inset 0 1px 1px rgba(255, 255, 255, 0.06),
+    0 4px 24px rgba(0, 0, 0, 0.25),
+    0 0 20px rgba(139, 92, 246, 0.05);
 }
 
 .home-hero-light .code-block-glass:hover {
@@ -1226,23 +1222,7 @@ html:not(.dark) .hero-glow-text {
 }
 
 /* ---- Logo Marquee Infinite Scroll ---- */
-.logo-marquee-track {
-  width: max-content;
-  animation: marquee-scroll 35s linear infinite;
-  gap: 1.5rem;
-}
-
-@media (min-width: 768px) {
-  .logo-marquee-track {
-    gap: 2rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .logo-marquee-track {
-    gap: 2.5rem;
-  }
-}
+/* See enhanced styles at end of file */
 
 @keyframes marquee-scroll {
   0% {
@@ -1260,11 +1240,11 @@ html:not(.dark) .hero-glow-text {
 
 /* ---- Edge fade masks for logo marquee ---- */
 .home-fade-left-dark {
-  background: linear-gradient(to right, #0a0f1a 0%, transparent 100%);
+  background: linear-gradient(to right, #050505 0%, transparent 100%);
 }
 
 .home-fade-right-dark {
-  background: linear-gradient(to left, #0a0f1a 0%, transparent 100%);
+  background: linear-gradient(to left, #050505 0%, transparent 100%);
 }
 
 .home-fade-left-light {
@@ -1273,4 +1253,176 @@ html:not(.dark) .hero-glow-text {
 
 .home-fade-right-light {
   background: linear-gradient(to left, #f8fafc 0%, transparent 100%);
+}
+
+/* ---- Grain texture overlay ---- */
+.grain-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 150px 150px;
+}
+
+/* ---- Soft purple glow behind hero text ---- */
+.hero-purple-glow {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  transform: translate(-50%, -50%);
+  width: 700px;
+  height: 450px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(139, 92, 246, 0.12) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 1;
+  filter: blur(80px);
+}
+
+/* ==================== Apple-style Fade-in-up Animation ==================== */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-up-delay-1 {
+  animation-delay: 0.1s;
+}
+
+.animate-fade-in-up-delay-2 {
+  animation-delay: 0.2s;
+}
+
+.animate-fade-in-up-delay-3 {
+  animation-delay: 0.35s;
+}
+
+.animate-fade-in-up-delay-4 {
+  animation-delay: 0.5s;
+}
+
+.animate-fade-in-up-delay-5 {
+  animation-delay: 0.65s;
+}
+
+/* ==================== Apple-style Gradient Text ==================== */
+.gradient-text-apple {
+  background: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0.55) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+html:not(.dark) .gradient-text-apple {
+  background: linear-gradient(180deg, #111827 0%, #6b7280 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ==================== Logo Marquee — Enhanced ==================== */
+.logo-marquee-track {
+  width: max-content;
+  animation: marquee-scroll 50s linear infinite;
+  gap: 3.5rem;
+}
+
+@media (min-width: 768px) {
+  .logo-marquee-track {
+    gap: 5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .logo-marquee-track {
+    gap: 6rem;
+  }
+}
+
+/* Logo desaturation */
+.logo-item-wrapper {
+  filter: grayscale(1) brightness(0.5);
+  opacity: 0.5;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.logo-item-wrapper:hover {
+  filter: grayscale(0) brightness(1);
+  opacity: 1;
+}
+
+html:not(.dark) .logo-item-wrapper {
+  filter: grayscale(1) brightness(0.6);
+  opacity: 0.45;
+}
+
+html:not(.dark) .logo-item-wrapper:hover {
+  filter: grayscale(0) brightness(1);
+  opacity: 1;
+}
+
+/* ==================== Hero Button — Physical Press ==================== */
+.hero-btn-press {
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-btn-press:hover {
+  transform: scale(0.96);
+}
+
+.hero-btn-press:active {
+  transform: scale(0.92);
+}
+
+/* ==================== Bento Card — Frosted Glass ==================== */
+.bento-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(40px) saturate(140%);
+  -webkit-backdrop-filter: blur(40px) saturate(140%);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.08),
+    0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.bento-card:hover {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.025) 100%);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.1),
+    0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+html:not(.dark) .bento-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.35) 100%);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+html:not(.dark) .bento-card:hover {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.4) 100%);
+  border-color: rgba(0, 0, 0, 0.08);
 }
