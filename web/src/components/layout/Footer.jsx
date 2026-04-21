@@ -45,7 +45,7 @@ const FooterBar = () => {
 
   const customFooter = useMemo(
     () => (
-      <footer className={`relative h-auto py-16 px-6 md:px-24 w-full flex flex-col items-center justify-between overflow-hidden ${isDark ? 'bg-[#0b1320]' : ''}`}>
+      <footer className={`relative h-auto pt-0 pb-[2.8rem] px-6 md:px-24 w-full flex flex-col items-center justify-between overflow-hidden ${isDark ? 'bg-[#0b1320]' : ''}`}>
         <div className='absolute hidden md:block top-[204px] left-[-100px] w-[151px] h-[151px] rounded-full bg-[#FFD166]'></div>
         <div className='absolute md:hidden bottom-[20px] left-[-50px] w-[80px] h-[80px] rounded-full bg-[#FFD166] opacity-60'></div>
 
@@ -191,25 +191,14 @@ const FooterBar = () => {
           </div>
         )}
 
-        <div className='flex flex-col md:flex-row items-center justify-between w-full max-w-[1110px] gap-6'>
-          {/* <div className='flex flex-wrap items-center gap-2'>
+        <div className='flex flex-col md:flex-row items-center justify-center w-full max-w-[1110px] gap-6'>
+          <div className='flex flex-wrap items-center gap-2'>
             <Typography.Text className='text-sm !text-semi-color-text-1'>
-              © {currentYear} {systemName}. {t('版权所有')}
+              {/* © {currentYear} {systemName}. {t('版权所有')} */}
+              北京润德骥图科技有限公司 Copyright ©{currentYear} spacehpc.com 备案号： 
+              <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer">京ICP备2020049003号-1</a>
             </Typography.Text>
           </div>
-          <div className='text-sm'>
-            <span className='!text-semi-color-text-1'>
-              {t('设计与开发由')}{' '}
-            </span>
-            <a
-              href='https://github.com/QuantumNous/new-api'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='!text-semi-color-primary font-medium'
-            >
-              New API
-            </a>
-          </div> */}
         </div>
       </footer>
     ),
