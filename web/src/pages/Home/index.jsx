@@ -244,12 +244,6 @@ const Home = () => {
   const textSecondary = isDark ? 'text-white/35' : 'text-black/40';
   const textTertiary = isDark ? 'text-white/25' : 'text-black/25';
   const iconBg = isDark ? 'bg-white/[0.05]' : 'bg-black/[0.04]';
-  const btnSecondaryBorder = isDark
-    ? 'border-white/15 hover:border-white/30 hover:bg-white/5'
-    : 'border-black/10 hover:border-black/20 hover:bg-black/5';
-  const btnSecondaryText = isDark
-    ? 'text-white/70 hover:text-white'
-    : 'text-black/60 hover:text-black';
 
   return (
     <div className='w-full h-full overflow-hidden' style={fontStack}>
@@ -343,7 +337,7 @@ const Home = () => {
                       title={t('复制')}
                     >
                       <Copy
-                        className={`w-3.5 h-3.5 transition-all duration-500 ${isDark ? 'text-white/25 group-hover:text-white/70' : 'text-black/25 group-hover:text-black/60'}`}
+                        className={`w-3.5 h-3.5 transition-all duration-500 ${isDark ? 'text-white/25 group-hover:text-[#2696ff]' : 'text-black/25 group-hover:text-[#2696ff]'}`}
                         strokeWidth={1.5}
                       />
                     </button>
@@ -354,7 +348,7 @@ const Home = () => {
                 <div className='animate-fade-in-up animate-fade-in-up-delay-4 flex flex-row gap-3 md:gap-4 justify-center items-center mt-7 md:mt-9'>
                   <Link to='/console'>
                     <button
-                      className={`hero-btn-press flex items-center gap-2 px-7 py-3 rounded-full text-sm font-semibold transition-all duration-500 ${isDark ? 'bg-white text-black' : 'bg-gray-900 text-white'}`}
+                      className={`hero-btn-press flex items-center gap-2 px-7 py-3 rounded-full text-sm font-semibold transition-all duration-500 hover:shadow-[0_0_15px_rgba(38,150,255,0.3)] ${isDark ? 'bg-white text-black hover:bg-white/95' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
                     >
                       <Play className='w-4 h-4' strokeWidth={1.5} />
                       {t('获取密钥')}
@@ -362,7 +356,7 @@ const Home = () => {
                   </Link>
                   {isDemoSiteMode && statusState?.status?.version ? (
                     <button
-                      className={`hero-btn-press flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium backdrop-blur-xl border transition-all duration-500 ${btnSecondaryBorder} ${btnSecondaryText}`}
+                      className={`hero-btn-press flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium backdrop-blur-xl border border-[#2696ff]/40 transition-all duration-500 text-white/70 hover:text-[#2696ff] hover:bg-[#2696ff]/5 hover:border-[#2696ff]/60`}
                       onClick={() =>
                         window.open(
                           'https://github.com/QuantumNous/new-api',
@@ -376,7 +370,7 @@ const Home = () => {
                   ) : (
                     docsLink && (
                       <button
-                        className={`hero-btn-press flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium backdrop-blur-xl border transition-all duration-500 ${btnSecondaryBorder} ${btnSecondaryText}`}
+                        className={`hero-btn-press flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium backdrop-blur-xl border border-[#2696ff]/40 transition-all duration-500 text-white/70 hover:text-[#2696ff] hover:bg-[#2696ff]/5 hover:border-[#2696ff]/60`}
                         onClick={() => window.open(docsLink, '_blank')}
                       >
                         <FileText className='w-4 h-4' strokeWidth={1.5} />

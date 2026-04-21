@@ -1267,7 +1267,7 @@ html:not(.dark) .hero-glow-text {
   background-size: 150px 150px;
 }
 
-/* ---- Soft purple glow behind hero text ---- */
+/* ---- Soft blue glow behind hero text ---- */
 .hero-purple-glow {
   position: absolute;
   left: 50%;
@@ -1276,7 +1276,7 @@ html:not(.dark) .hero-glow-text {
   width: 700px;
   height: 450px;
   border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(139, 92, 246, 0.12) 0%, transparent 65%);
+  background: radial-gradient(ellipse, rgba(38, 150, 255, 0.12) 0%, transparent 65%);
   pointer-events: none;
   z-index: 1;
   filter: blur(80px);
@@ -1459,7 +1459,7 @@ html:not(.dark) .bento-card:hover {
 .hero-orb-purple {
   width: 520px;
   height: 520px;
-  background: rgba(138, 43, 226, 0.15);
+  background: rgba(38, 150, 255, 0.15);
   top: -140px;
   left: -140px;
 }
@@ -1467,29 +1467,29 @@ html:not(.dark) .bento-card:hover {
 .hero-orb-cyan {
   width: 520px;
   height: 520px;
-  background: rgba(0, 191, 255, 0.15);
+  background: rgba(38, 150, 255, 0.12);
   bottom: -140px;
   right: -140px;
 }
 
 html:not(.dark) .hero-orb-purple {
-  background: rgba(138, 43, 226, 0.08);
+  background: rgba(38, 150, 255, 0.1);
 }
 
 html:not(.dark) .hero-orb-cyan {
-  background: rgba(0, 191, 255, 0.08);
+  background: rgba(38, 150, 255, 0.08);
 }
 
 /* ---- Gradient Flow Title ---- */
 .gradient-title-flow {
-  background: linear-gradient(90deg, #FFFFFF 0%, #A5B4FC 50%, #E879F9 100%);
+  background: linear-gradient(90deg, #FFFFFF 0%, #FFFFFF 50%, #2696ff 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 html:not(.dark) .gradient-title-flow {
-  background: linear-gradient(90deg, #111827 0%, #4f46e5 50%, #9333ea 100%);
+  background: linear-gradient(90deg, #111827 0%, #111827 50%, #2696ff 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -1569,60 +1569,45 @@ html:not(.dark) .icon-glow-yellow {
   background: radial-gradient(circle, rgba(234, 179, 8, 0.14) 0%, transparent 70%);
 }
 
-/* Icon colors */
-.bento-icon-blue {
-  color: #60a5fa;
-}
-
-.bento-icon-green {
-  color: #34d399;
-}
-
+/* Icon colors — unified brand blue */
+.bento-icon-blue,
+.bento-icon-green,
 .bento-icon-yellow {
-  color: #facc15;
+  color: #2696ff;
 }
 
-html:not(.dark) .bento-icon-blue {
-  color: #3b82f6;
-}
-
-html:not(.dark) .bento-icon-green {
-  color: #10b981;
-}
-
+html:not(.dark) .bento-icon-blue,
+html:not(.dark) .bento-icon-green,
 html:not(.dark) .bento-icon-yellow {
-  color: #eab308;
+  color: #2696ff;
 }
 
-/* Card hover border colors */
-.bento-card-blue:hover {
-  border-color: rgba(96, 165, 250, 0.35);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 24px rgba(96, 165, 250, 0.08);
+/* Icon glow dots — unified brand blue */
+.icon-glow-blue,
+.icon-glow-green,
+.icon-glow-yellow {
+  background: radial-gradient(circle, rgba(38, 150, 255, 0.22) 0%, transparent 70%);
 }
 
-.bento-card-green:hover {
-  border-color: rgba(52, 211, 153, 0.35);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 24px rgba(52, 211, 153, 0.08);
+html:not(.dark) .icon-glow-blue,
+html:not(.dark) .icon-glow-green,
+html:not(.dark) .icon-glow-yellow {
+  background: radial-gradient(circle, rgba(38, 150, 255, 0.14) 0%, transparent 70%);
 }
 
+/* Card hover border colors — unified brand blue */
+.bento-card-blue:hover,
+.bento-card-green:hover,
 .bento-card-yellow:hover {
-  border-color: rgba(250, 204, 21, 0.35);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 24px rgba(250, 204, 21, 0.08);
+  border-color: rgba(38, 150, 255, 0.4);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 24px rgba(38, 150, 255, 0.1);
 }
 
-html:not(.dark) .bento-card-blue:hover {
-  border-color: rgba(59, 130, 246, 0.3);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 12px 40px rgba(0, 0, 0, 0.08), 0 0 24px rgba(59, 130, 246, 0.06);
-}
-
-html:not(.dark) .bento-card-green:hover {
-  border-color: rgba(16, 185, 129, 0.3);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 12px 40px rgba(0, 0, 0, 0.08), 0 0 24px rgba(16, 185, 129, 0.06);
-}
-
+html:not(.dark) .bento-card-blue:hover,
+html:not(.dark) .bento-card-green:hover,
 html:not(.dark) .bento-card-yellow:hover {
-  border-color: rgba(234, 179, 8, 0.3);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 12px 40px rgba(0, 0, 0, 0.08), 0 0 24px rgba(234, 179, 8, 0.06);
+  border-color: rgba(38, 150, 255, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 12px 40px rgba(0, 0, 0, 0.08), 0 0 24px rgba(38, 150, 255, 0.08);
 }
 
 /* ================================================================
