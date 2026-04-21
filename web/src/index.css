@@ -1426,3 +1426,185 @@ html:not(.dark) .bento-card:hover {
     linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.4) 100%);
   border-color: rgba(0, 0, 0, 0.08);
 }
+
+/* ==================== Home Page — Colorful Enhancements ==================== */
+
+/* ---- Atmospheric Glow Orbs ---- */
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero-orb-purple {
+  width: 520px;
+  height: 520px;
+  background: rgba(138, 43, 226, 0.15);
+  top: -140px;
+  left: -140px;
+}
+
+.hero-orb-cyan {
+  width: 520px;
+  height: 520px;
+  background: rgba(0, 191, 255, 0.15);
+  bottom: -140px;
+  right: -140px;
+}
+
+html:not(.dark) .hero-orb-purple {
+  background: rgba(138, 43, 226, 0.08);
+}
+
+html:not(.dark) .hero-orb-cyan {
+  background: rgba(0, 191, 255, 0.08);
+}
+
+/* ---- Gradient Flow Title ---- */
+.gradient-title-flow {
+  background: linear-gradient(90deg, #FFFFFF 0%, #A5B4FC 50%, #E879F9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+html:not(.dark) .gradient-title-flow {
+  background: linear-gradient(90deg, #111827 0%, #4f46e5 50%, #9333ea 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ---- URL Box — Deep Blue Glass ---- */
+.url-box-glass {
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  background: linear-gradient(180deg, rgba(30, 58, 138, 0.12) 0%, rgba(30, 58, 138, 0.06) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 1px 0 rgba(96, 165, 250, 0.25), 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.url-box-glass:hover {
+  background: linear-gradient(180deg, rgba(30, 58, 138, 0.16) 0%, rgba(30, 58, 138, 0.08) 100%);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: inset 0 1px 0 rgba(96, 165, 250, 0.35), 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+html:not(.dark) .url-box-glass {
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.06) 0%, rgba(59, 130, 246, 0.02) 100%);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 1px 0 rgba(96, 165, 250, 0.2), 0 8px 32px rgba(0, 0, 0, 0.06);
+}
+
+html:not(.dark) .url-box-glass:hover {
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.04) 100%);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+/* ---- Logo Item — Hover Glow ---- */
+.logo-item-wrapper:hover {
+  filter: grayscale(0) brightness(1);
+  opacity: 1;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.07) 0%, transparent 70%);
+}
+
+html:not(.dark) .logo-item-wrapper:hover {
+  filter: grayscale(0) brightness(1);
+  opacity: 1;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.85) 0%, transparent 70%);
+}
+
+/* ---- Bento Card — Colorful Icon Glows ---- */
+.icon-glow-dot {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  pointer-events: none;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+}
+
+.icon-glow-blue {
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.22) 0%, transparent 70%);
+}
+
+.icon-glow-green {
+  background: radial-gradient(circle, rgba(52, 211, 153, 0.22) 0%, transparent 70%);
+}
+
+.icon-glow-yellow {
+  background: radial-gradient(circle, rgba(250, 204, 21, 0.22) 0%, transparent 70%);
+}
+
+html:not(.dark) .icon-glow-blue {
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.14) 0%, transparent 70%);
+}
+
+html:not(.dark) .icon-glow-green {
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.14) 0%, transparent 70%);
+}
+
+html:not(.dark) .icon-glow-yellow {
+  background: radial-gradient(circle, rgba(234, 179, 8, 0.14) 0%, transparent 70%);
+}
+
+/* Icon colors */
+.bento-icon-blue {
+  color: #60a5fa;
+}
+
+.bento-icon-green {
+  color: #34d399;
+}
+
+.bento-icon-yellow {
+  color: #facc15;
+}
+
+html:not(.dark) .bento-icon-blue {
+  color: #3b82f6;
+}
+
+html:not(.dark) .bento-icon-green {
+  color: #10b981;
+}
+
+html:not(.dark) .bento-icon-yellow {
+  color: #eab308;
+}
+
+/* Card hover border colors */
+.bento-card-blue:hover {
+  border-color: rgba(96, 165, 250, 0.35);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 24px rgba(96, 165, 250, 0.08);
+}
+
+.bento-card-green:hover {
+  border-color: rgba(52, 211, 153, 0.35);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 24px rgba(52, 211, 153, 0.08);
+}
+
+.bento-card-yellow:hover {
+  border-color: rgba(250, 204, 21, 0.35);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 24px rgba(250, 204, 21, 0.08);
+}
+
+html:not(.dark) .bento-card-blue:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 12px 40px rgba(0, 0, 0, 0.08), 0 0 24px rgba(59, 130, 246, 0.06);
+}
+
+html:not(.dark) .bento-card-green:hover {
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 12px 40px rgba(0, 0, 0, 0.08), 0 0 24px rgba(16, 185, 129, 0.06);
+}
+
+html:not(.dark) .bento-card-yellow:hover {
+  border-color: rgba(234, 179, 8, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 12px 40px rgba(0, 0, 0, 0.08), 0 0 24px rgba(234, 179, 8, 0.06);
+}

@@ -236,13 +236,6 @@ const Home = () => {
   const textPrimary = isDark ? 'text-white' : 'text-gray-900';
   const textSecondary = isDark ? 'text-white/35' : 'text-black/40';
   const textTertiary = isDark ? 'text-white/25' : 'text-black/25';
-  const borderSubtle = isDark ? 'border-white/10' : 'border-black/8';
-  const glassBg = isDark
-    ? 'bg-gradient-to-b from-white/[0.06] to-white/[0.02]'
-    : 'bg-gradient-to-b from-black/[0.04] to-black/[0.01]';
-  const glassBgHover = isDark
-    ? 'hover:from-white/[0.08] hover:to-white/[0.03]'
-    : 'hover:from-black/[0.06] hover:to-black/[0.02]';
   const iconBg = isDark ? 'bg-white/[0.05]' : 'bg-black/[0.04]';
   const btnSecondaryBorder = isDark
     ? 'border-white/15 hover:border-white/30 hover:bg-white/5'
@@ -266,6 +259,10 @@ const Home = () => {
           >
             {/* ---- Mesh Gradient Background ---- */}
             <div className='mesh-gradient-bg' aria-hidden='true' />
+
+            {/* ---- Atmospheric Glow Orbs ---- */}
+            <div className='hero-orb hero-orb-purple' aria-hidden='true' />
+            <div className='hero-orb hero-orb-cyan' aria-hidden='true' />
 
             {/* ---- Subtle particles ---- */}
             <div className='particles-layer' aria-hidden='true'>
@@ -304,7 +301,7 @@ const Home = () => {
 
                 {/* Main title */}
                 <h1
-                  className={`animate-fade-in-up animate-fade-in-up-delay-2 text-[1.75rem] md:text-[2.5rem] lg:text-[3rem] font-bold leading-[1.1] tracking-tight ${textPrimary}`}
+                  className='animate-fade-in-up animate-fade-in-up-delay-2 text-[1.75rem] md:text-[2.5rem] lg:text-[3rem] font-bold leading-[1.1] tracking-tight gradient-title-flow'
                 >
                   <span className='block'>{t('统一的')}</span>
                   <span className='block'>{t('大模型接口网关')}</span>
@@ -317,10 +314,10 @@ const Home = () => {
                   {t('更好的价格，更好的稳定性，只需要将模型基址替换为：')}
                 </p>
 
-                {/* URL Block — Control Center Style */}
+                {/* URL Block — Deep Blue Glass */}
                 <div className='animate-fade-in-up animate-fade-in-up-delay-3 mt-7 md:mt-8 w-full max-w-md mx-auto px-2'>
                   <div
-                    className={`flex items-center gap-3 px-5 py-3.5 md:px-6 md:py-4 rounded-3xl backdrop-blur-2xl ${glassBg} ${glassBgHover} border ${borderSubtle} transition-all duration-500`}
+                    className='url-box-glass flex items-center gap-3 px-5 py-3.5 md:px-6 md:py-4 rounded-3xl transition-all duration-500'
                   >
                     <span
                       className={`text-sm md:text-[0.9rem] font-mono truncate shrink-0 tracking-wide ${isDark ? 'text-white/55' : 'text-black/55'}`}
@@ -387,13 +384,14 @@ const Home = () => {
                   <div className='grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4'>
                     {/* Card 1 — Speed */}
                     <div
-                      className='bento-card flex flex-col items-start gap-3.5 p-5 md:p-6 rounded-[1.75rem]'
+                      className='bento-card bento-card-blue flex flex-col items-start gap-3.5 p-5 md:p-6 rounded-[1.75rem]'
                     >
                       <div
-                        className={`w-10 h-10 flex items-center justify-center rounded-2xl ${iconBg}`}
+                        className={`relative w-10 h-10 flex items-center justify-center rounded-2xl ${iconBg}`}
                       >
+                        <span className='icon-glow-dot icon-glow-blue' aria-hidden='true' />
                         <Zap
-                          className={`w-5 h-5 ${isDark ? 'text-white/80' : 'text-black/70'}`}
+                          className='relative z-10 w-5 h-5 bento-icon-blue'
                           strokeWidth={1.5}
                         />
                       </div>
@@ -411,13 +409,14 @@ const Home = () => {
 
                     {/* Card 2 — Reliability (slightly larger) */}
                     <div
-                      className='bento-card flex flex-col items-start gap-3.5 p-5 md:p-7 rounded-[1.75rem] md:scale-[1.02] md:-my-0.5'
+                      className='bento-card bento-card-green flex flex-col items-start gap-3.5 p-5 md:p-7 rounded-[1.75rem] md:scale-[1.02] md:-my-0.5'
                     >
                       <div
-                        className={`w-10 h-10 flex items-center justify-center rounded-2xl ${iconBg}`}
+                        className={`relative w-10 h-10 flex items-center justify-center rounded-2xl ${iconBg}`}
                       >
+                        <span className='icon-glow-dot icon-glow-green' aria-hidden='true' />
                         <Shield
-                          className={`w-5 h-5 ${isDark ? 'text-white/80' : 'text-black/70'}`}
+                          className='relative z-10 w-5 h-5 bento-icon-green'
                           strokeWidth={1.5}
                         />
                       </div>
@@ -435,13 +434,14 @@ const Home = () => {
 
                     {/* Card 3 — Cost */}
                     <div
-                      className='bento-card flex flex-col items-start gap-3.5 p-5 md:p-6 rounded-[1.75rem]'
+                      className='bento-card bento-card-yellow flex flex-col items-start gap-3.5 p-5 md:p-6 rounded-[1.75rem]'
                     >
                       <div
-                        className={`w-10 h-10 flex items-center justify-center rounded-2xl ${iconBg}`}
+                        className={`relative w-10 h-10 flex items-center justify-center rounded-2xl ${iconBg}`}
                       >
+                        <span className='icon-glow-dot icon-glow-yellow' aria-hidden='true' />
                         <BarChart3
-                          className={`w-5 h-5 ${isDark ? 'text-white/80' : 'text-black/70'}`}
+                          className='relative z-10 w-5 h-5 bento-icon-yellow'
                           strokeWidth={1.5}
                         />
                       </div>
