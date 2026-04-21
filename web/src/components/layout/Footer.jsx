@@ -45,7 +45,7 @@ const FooterBar = () => {
 
   const customFooter = useMemo(
     () => (
-      <footer className={`relative h-auto pt-0 pb-[2.8rem] px-6 md:px-24 w-full flex flex-col items-center justify-between overflow-hidden ${isDark ? 'bg-[#0b1320]' : ''}`}>
+      <footer className={`relative h-auto pt-0 pb-[2.8rem] px-6 md:px-24 w-full flex flex-col items-center justify-between overflow-hidden ${isDark ? 'bg-[#0a0f1a]' : ''}`}>
         <div className='absolute hidden md:block top-[204px] left-[-100px] w-[151px] h-[151px] rounded-full bg-[#FFD166]'></div>
         <div className='absolute md:hidden bottom-[20px] left-[-50px] w-[80px] h-[80px] rounded-full bg-[#FFD166] opacity-60'></div>
 
@@ -212,7 +212,7 @@ const FooterBar = () => {
   return (
     <div className='w-full'>
       {footer ? (
-        <footer className={`relative h-auto py-4 px-6 md:px-24 w-full flex items-center justify-center overflow-hidden ${isDark ? 'bg-[#0b1320]' : ''}`}>
+        <footer className={`relative h-auto py-4 px-6 md:px-24 w-full flex items-center justify-center overflow-hidden ${isDark ? 'bg-[#0a0f1a]' : ''}`}>
           <div className='flex flex-col md:flex-row items-center justify-between w-full max-w-[1110px] gap-4'>
             <div
               className='custom-footer na-cb6feafeb3990c78 text-sm !text-semi-color-text-1'

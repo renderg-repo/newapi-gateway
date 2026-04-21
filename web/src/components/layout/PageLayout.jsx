@@ -62,7 +62,8 @@ const PageLayout = () => {
     '/pricing',
   ];
 
-  const shouldHideFooter = cardProPages.includes(location.pathname);
+  const isHomePage = location.pathname === '/';
+  const shouldHideFooter = cardProPages.includes(location.pathname) || isHomePage;
 
   const shouldInnerPadding =
     location.pathname.includes('/console') &&
@@ -171,7 +172,7 @@ const PageLayout = () => {
       </Header>
       <Layout
         style={{
-          overflow: isMobile ? 'visible' : 'auto',
+          overflow: isMobile ? 'visible' : (isHomePage ? 'hidden' : 'auto'),
           display: 'flex',
           flexDirection: 'column',
         }}
