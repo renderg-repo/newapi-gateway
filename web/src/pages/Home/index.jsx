@@ -80,26 +80,26 @@ const particles = Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
    Provider logo list (re-used for seamless marquee)
    ================================================================ */
 const PROVIDERS = [
-  { Component: Moonshot },
-  { Component: OpenAI },
-  { Component: XAI },
-  { Component: Zhipu },
-  { Component: Volcengine },
-  { Component: Cohere },
-  { Component: Claude },
-  { Component: Gemini },
-  { Component: Suno },
-  { Component: Minimax },
-  { Component: Wenxin },
-  { Component: Spark },
-  { Component: Qingyan },
-  { Component: DeepSeek },
-  { Component: Qwen },
-  { Component: Midjourney },
-  { Component: Grok },
-  { Component: AzureAI },
-  { Component: Hunyuan },
-  { Component: Xinference },
+  { Component: Moonshot, colorDark: '#8B9EFF', colorLight: '#16191E' },
+  { Component: OpenAI, colorDark: '#fff', colorLight: '#000' },
+  { Component: XAI, colorDark: '#fff', colorLight: '#333' },
+  { Component: Zhipu, colorDark: '#5c7cff', colorLight: '#3859FF' },
+  { Component: Volcengine, colorDark: '#fff', colorLight: '#333' },
+  { Component: Cohere, colorDark: '#6abf9e', colorLight: '#39594D' },
+  { Component: Claude, colorDark: '#e89a7d', colorLight: '#D97757' },
+  { Component: Gemini, colorDark: '#fff', colorLight: '#333' },
+  { Component: Suno, colorDark: '#FF6B6B', colorLight: '#000' },
+  { Component: Minimax, colorDark: '#f56f82', colorLight: '#F23F5D' },
+  { Component: Wenxin, colorDark: '#4a9eff', colorLight: '#167ADF' },
+  { Component: Spark, colorDark: '#4a9fff', colorLight: '#0070f0' },
+  { Component: Qingyan, colorDark: '#4d7aff', colorLight: '#1041F3' },
+  { Component: DeepSeek, colorDark: '#7a8fff', colorLight: '#4D6BFE' },
+  { Component: Qwen, colorDark: '#8a7fff', colorLight: '#615ced' },
+  { Component: Midjourney, colorDark: '#fff', colorLight: '#333' },
+  { Component: Grok, colorDark: '#fff', colorLight: '#000' },
+  { Component: AzureAI, colorDark: '#4da6ff', colorLight: '#000' },
+  { Component: Hunyuan, colorDark: '#4d8fff', colorLight: '#0053e0' },
+  { Component: Xinference, colorDark: '#a66aff', colorLight: '#781ff5' },
 ];
 
 /* ================================================================
@@ -203,13 +203,20 @@ const Home = () => {
   const marqueeLogos = useMemo(
     () => (
       <>
-        {PROVIDERS.map(({ Component }, i) => (
+        {PROVIDERS.map(({ Component, colorDark, colorLight }, i) => (
           <div
             key={`a-${i}`}
             className='logo-item-wrapper flex-shrink-0 flex items-center justify-center'
-            style={{ width: logoSize + 40 }}
+            style={{
+              width: logoSize + 40,
+              '--logo-color-dark': colorDark,
+              '--logo-color-light': colorLight,
+            }}
           >
-            <Component size={logoSize} />
+            <Component size={logoSize} className='logo-mono' />
+            {Component.Color && (
+              <Component.Color size={logoSize} className='logo-color' />
+            )}
           </div>
         ))}
         <div
