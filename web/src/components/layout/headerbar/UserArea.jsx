@@ -148,13 +148,12 @@ const UserArea = ({
       'flex items-center justify-center !py-[10px] !px-1.5';
 
     const loginButtonSpecificStyling =
-      '!bg-semi-color-fill-0 dark:!bg-semi-color-fill-1 hover:!bg-semi-color-fill-1 dark:hover:!bg-gray-700 transition-colors';
+      '!bg-transparent !border !border-[#2696ff] !text-[#2696ff] hover:!bg-[#2696ff]/10 transition-all duration-300';
     let loginButtonClasses = `${commonSizingAndLayoutClass} ${loginButtonSpecificStyling}`;
 
-    let registerButtonClasses = `${commonSizingAndLayoutClass}`;
+    let registerButtonClasses = `${commonSizingAndLayoutClass} !bg-[#2696ff] hover:!bg-[#2080e0] transition-all duration-300`;
 
-    const loginButtonTextSpanClass =
-      '!text-xs !text-semi-color-text-1 dark:!text-gray-300 !p-1.5';
+    const loginButtonTextSpanClass = '!text-xs !text-[#2696ff] !p-1.5';
     const registerButtonTextSpanClass = '!text-xs !text-white !p-1.5';
 
     if (showRegisterButton) {
