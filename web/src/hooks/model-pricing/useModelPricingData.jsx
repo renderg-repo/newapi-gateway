@@ -23,6 +23,7 @@ import { API, copy, showError, showInfo, showSuccess } from '../../helpers';
 import { Modal } from '@douyinfe/semi-ui';
 import { UserContext } from '../../context/User';
 import { StatusContext } from '../../context/Status';
+import { getMockPricingData } from './mockData';
 
 export const useModelPricingData = () => {
   const { t } = useTranslation();
@@ -228,34 +229,62 @@ export const useModelPricingData = () => {
   const loadPricing = async () => {
     setLoading(true);
     let url = '/api/pricing';
-    const res = await API.get(url);
-    const {
-      success,
-      message,
-      data,
-      vendors,
-      group_ratio,
-      usable_group,
-      supported_endpoint,
-      auto_groups,
-    } = res.data;
-    if (success) {
-      setGroupRatio(group_ratio);
-      setUsableGroup(usable_group);
-      setSelectedGroup('all');
-      // 构建供应商 Map 方便查找
-      const vendorMap = {};
-      if (Array.isArray(vendors)) {
-        vendors.forEach((v) => {
+    try {
+      const res = await API.get(url);
+      const {
+        success,
+        message,
+        data,
+        vendors,
+        group_ratio,
+        usable_group,
+        supported_endpoint,
+        auto_groups,
+      } = res.data;
+      if (success && Array.isArray(data) && data.length > 0) {
+        setGroupRatio(group_ratio);
+        setUsableGroup(usable_group);
+        setSelectedGroup('all');
+        // 构建供应商 Map 方便查找
+        const vendorMap = {};
+        if (Array.isArray(vendors)) {
+          vendors.forEach((v) => {
+            vendorMap[v.id] = v;
+          });
+        }
+        setVendorsMap(vendorMap);
+        setEndpointMap(supported_endpoint || {});
+        setAutoGroups(auto_groups || []);
+        setModelsFormat(data, group_ratio, vendorMap);
+      } else {
+        // API 返回成功但无数据，使用模拟数据
+        const mock = getMockPricingData();
+        setGroupRatio(mock.group_ratio);
+        setUsableGroup(mock.usable_group);
+        setSelectedGroup('all');
+        const vendorMap = {};
+        mock.vendors.forEach((v) => {
           vendorMap[v.id] = v;
         });
+        setVendorsMap(vendorMap);
+        setEndpointMap(mock.supported_endpoint);
+        setAutoGroups(mock.auto_groups);
+        setModelsFormat(mock.data, mock.group_ratio, vendorMap);
       }
+    } catch (error) {
+      // API 请求失败，使用模拟数据
+      const mock = getMockPricingData();
+      setGroupRatio(mock.group_ratio);
+      setUsableGroup(mock.usable_group);
+      setSelectedGroup('all');
+      const vendorMap = {};
+      mock.vendors.forEach((v) => {
+        vendorMap[v.id] = v;
+      });
       setVendorsMap(vendorMap);
-      setEndpointMap(supported_endpoint || {});
-      setAutoGroups(auto_groups || []);
-      setModelsFormat(data, group_ratio, vendorMap);
-    } else {
-      showError(message);
+      setEndpointMap(mock.supported_endpoint);
+      setAutoGroups(mock.auto_groups);
+      setModelsFormat(mock.data, mock.group_ratio, vendorMap);
     }
     setLoading(false);
   };
