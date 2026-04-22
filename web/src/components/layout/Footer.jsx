@@ -228,7 +228,7 @@ const FooterBar = () => {
                 rel='noopener noreferrer'
                 className='!text-semi-color-primary font-medium'
               >
-                New API
+                星海 Token
               </a>
             </div>
           </div>

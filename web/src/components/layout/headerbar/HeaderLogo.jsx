@@ -59,10 +59,10 @@ const HeaderLogo = ({
               heading={4}
               className='!text-lg !font-semibold !mb-0'
             >
-              {systemName}
+              星海 Token
             </Typography.Title>
           </SkeletonWrapper>
-          {(isSelfUseMode || isDemoSiteMode) && !isLoading && (
+          {/* {(isSelfUseMode || isDemoSiteMode) && !isLoading && (
             <Tag
               color={isSelfUseMode ? 'purple' : 'blue'}
               className='text-xs px-1.5 py-0.5 rounded whitespace-nowrap shadow-sm'
@@ -71,7 +71,7 @@ const HeaderLogo = ({
             >
               {isSelfUseMode ? t('自用模式') : t('演示站点')}
             </Tag>
-          )}
+          )} */}
         </div>
       </div>
     </Link>
