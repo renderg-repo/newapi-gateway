@@ -41,6 +41,8 @@ import {
   Form,
   Icon,
   Modal,
+  Tabs,
+  TabPane,
 } from '@douyinfe/semi-ui';
 import Title from '@douyinfe/semi-ui/lib/es/typography/title';
 import Text from '@douyinfe/semi-ui/lib/es/typography/text';
@@ -80,6 +82,8 @@ const RegisterForm = () => {
     email: '',
     verification_code: '',
     wechat_verification_code: '',
+    phone: '',
+    sms_code: '',
   });
   const { username, password, password2 } = inputs;
   const [userState, userDispatch] = useContext(UserContext);
@@ -103,6 +107,10 @@ const RegisterForm = () => {
   const [customOAuthLoading, setCustomOAuthLoading] = useState({});
   const [disableButton, setDisableButton] = useState(false);
   const [countdown, setCountdown] = useState(30);
+  const [smsCodeLoading, setSmsCodeLoading] = useState(false);
+  const [smsCountdown, setSmsCountdown] = useState(60);
+  const [smsButtonDisabled, setSmsButtonDisabled] = useState(false);
+  const [phoneRegisterLoading, setPhoneRegisterLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [hasUserAgreement, setHasUserAgreement] = useState(false);
   const [hasPrivacyPolicy, setHasPrivacyPolicy] = useState(false);
@@ -167,6 +175,19 @@ const RegisterForm = () => {
     }
     return () => clearInterval(countdownInterval); // Clean up on unmount
   }, [disableButton, countdown]);
+
+  useEffect(() => {
+    let countdownInterval = null;
+    if (smsButtonDisabled && smsCountdown > 0) {
+      countdownInterval = setInterval(() => {
+        setSmsCountdown((prev) => prev - 1);
+      }, 1000);
+    } else if (smsCountdown === 0) {
+      setSmsButtonDisabled(false);
+      setSmsCountdown(60);
+    }
+    return () => clearInterval(countdownInterval);
+  }, [smsButtonDisabled, smsCountdown]);
 
   useEffect(() => {
     return () => {
@@ -278,6 +299,76 @@ const RegisterForm = () => {
       setVerificationCodeLoading(false);
     }
   };
+
+  const sendSMSCode = async () => {
+    if (!inputs.phone) {
+      showInfo(t('请输入手机号'));
+      return;
+    }
+    if (turnstileEnabled && turnstileToken === '') {
+      showInfo('请稍后几秒重试，Turnstile 正在检查用户环境！');
+      return;
+    }
+    setSmsCodeLoading(true);
+    try {
+      const res = await API.post(`/api/sms/send`, {
+        phone: inputs.phone,
+        type: 'register',
+      });
+      const { success, message } = res.data;
+      if (success) {
+        showSuccess(t('验证码发送成功'));
+        setSmsButtonDisabled(true);
+      } else {
+        showError(message);
+      }
+    } catch (error) {
+      showError(t('验证码发送失败'));
+    } finally {
+      setSmsCodeLoading(false);
+    }
+  };
+
+  async function handlePhoneRegister(e) {
+    if (!inputs.phone || !inputs.sms_code) {
+      showInfo(t('请输入手机号和验证码'));
+      return;
+    }
+    if (turnstileEnabled && turnstileToken === '') {
+      showInfo('请稍后几秒重试，Turnstile 正在检查用户环境！');
+      return;
+    }
+    setPhoneRegisterLoading(true);
+    try {
+      if (!affCode) {
+        affCode = localStorage.getItem('aff');
+      }
+      const res = await API.post(
+        `/api/user/register/phone?turnstile=${turnstileToken}`,
+        {
+          phone: inputs.phone,
+          code: inputs.sms_code,
+          password: inputs.password,
+          aff_code: affCode,
+        },
+      );
+      const { success, message, data } = res.data;
+      if (success) {
+        userDispatch({ type: 'login', payload: data });
+        localStorage.setItem('user', JSON.stringify(data));
+        setUserData(data);
+        updateAPI();
+        showSuccess(t('注册成功！'));
+        navigate('/');
+      } else {
+        showError(message);
+      }
+    } catch (error) {
+      showError(t('注册失败，请重试'));
+    } finally {
+      setPhoneRegisterLoading(false);
+    }
+  }
 
   const handleGitHubClick = () => {
     if (githubButtonDisabled) {
@@ -572,125 +663,226 @@ const RegisterForm = () => {
               </Title>
             </div>
             <div className='px-2 py-8'>
-              <Form className='space-y-3'>
-                <Form.Input
-                  field='username'
-                  label={t('用户名')}
-                  placeholder={t('请输入用户名')}
-                  name='username'
-                  onChange={(value) => handleChange('username', value)}
-                  prefix={<IconUser />}
-                />
-
-                <Form.Input
-                  field='password'
-                  label={t('密码')}
-                  placeholder={t('输入密码，最短 8 位，最长 20 位')}
-                  name='password'
-                  mode='password'
-                  onChange={(value) => handleChange('password', value)}
-                  prefix={<IconLock />}
-                />
-
-                <Form.Input
-                  field='password2'
-                  label={t('确认密码')}
-                  placeholder={t('确认密码')}
-                  name='password2'
-                  mode='password'
-                  onChange={(value) => handleChange('password2', value)}
-                  prefix={<IconLock />}
-                />
-
-                {showEmailVerification && (
-                  <>
+              <Tabs type='button' defaultActiveKey='username'>
+                <TabPane tab={t('用户名')} itemKey='username'>
+                  <Form className='space-y-3 mt-4'>
                     <Form.Input
-                      field='email'
-                      label={t('邮箱')}
-                      placeholder={t('输入邮箱地址')}
-                      name='email'
-                      type='email'
-                      onChange={(value) => handleChange('email', value)}
-                      prefix={<IconMail />}
-                      suffix={
-                        <Button
-                          onClick={sendVerificationCode}
-                          loading={verificationCodeLoading}
-                          disabled={disableButton || verificationCodeLoading}
+                      field='username'
+                      label={t('用户名')}
+                      placeholder={t('请输入用户名')}
+                      name='username'
+                      onChange={(value) => handleChange('username', value)}
+                      prefix={<IconUser />}
+                    />
+
+                    <Form.Input
+                      field='password'
+                      label={t('密码')}
+                      placeholder={t('输入密码，最短 8 位，最长 20 位')}
+                      name='password'
+                      mode='password'
+                      onChange={(value) => handleChange('password', value)}
+                      prefix={<IconLock />}
+                    />
+
+                    <Form.Input
+                      field='password2'
+                      label={t('确认密码')}
+                      placeholder={t('确认密码')}
+                      name='password2'
+                      mode='password'
+                      onChange={(value) => handleChange('password2', value)}
+                      prefix={<IconLock />}
+                    />
+
+                    {showEmailVerification && (
+                      <>
+                        <Form.Input
+                          field='email'
+                          label={t('邮箱')}
+                          placeholder={t('输入邮箱地址')}
+                          name='email'
+                          type='email'
+                          onChange={(value) => handleChange('email', value)}
+                          prefix={<IconMail />}
+                          suffix={
+                            <Button
+                              onClick={sendVerificationCode}
+                              loading={verificationCodeLoading}
+                              disabled={disableButton || verificationCodeLoading}
+                            >
+                              {disableButton
+                                ? `${t('重新发送')} (${countdown})`
+                                : t('获取验证码')}
+                            </Button>
+                          }
+                        />
+                        <Form.Input
+                          field='verification_code'
+                          label={t('验证码')}
+                          placeholder={t('输入验证码')}
+                          name='verification_code'
+                          onChange={(value) =>
+                            handleChange('verification_code', value)
+                          }
+                          prefix={<IconKey />}
+                        />
+                      </>
+                    )}
+
+                    {(hasUserAgreement || hasPrivacyPolicy) && (
+                      <div className='pt-4'>
+                        <Checkbox
+                          checked={agreedToTerms}
+                          onChange={(e) => setAgreedToTerms(e.target.checked)}
                         >
-                          {disableButton
-                            ? `${t('重新发送')} (${countdown})`
-                            : t('获取验证码')}
+                          <Text size='small' className='text-gray-600'>
+                            {t('我已阅读并同意')}
+                            {hasUserAgreement && (
+                              <>
+                                <a
+                                  href='/user-agreement'
+                                  target='_blank'
+                                  rel='noopener noreferrer'
+                                  className='text-blue-600 hover:text-blue-800 mx-1'
+                                >
+                                  {t('用户协议')}
+                                </a>
+                              </>
+                            )}
+                            {hasUserAgreement && hasPrivacyPolicy && t('和')}
+                            {hasPrivacyPolicy && (
+                              <>
+                                <a
+                                  href='/privacy-policy'
+                                  target='_blank'
+                                  rel='noopener noreferrer'
+                                  className='text-blue-600 hover:text-blue-800 mx-1'
+                                >
+                                  {t('隐私政策')}
+                                </a>
+                              </>
+                            )}
+                          </Text>
+                        </Checkbox>
+                      </div>
+                    )}
+
+                    <div className='space-y-2 pt-2'>
+                      <Button
+                        theme='solid'
+                        className='w-full !rounded-full'
+                        type='primary'
+                        htmlType='submit'
+                        onClick={handleSubmit}
+                        loading={registerLoading}
+                        disabled={
+                          (hasUserAgreement || hasPrivacyPolicy) && !agreedToTerms
+                        }
+                      >
+                        {t('注册')}
+                      </Button>
+                    </div>
+                  </Form>
+                </TabPane>
+                {status.sms_enabled && (
+                  <TabPane tab={t('手机号')} itemKey='phone'>
+                    <Form className='space-y-3 mt-4'>
+                      <Form.Input
+                        field='phone'
+                        label={t('手机号')}
+                        placeholder={t('请输入手机号')}
+                        name='phone'
+                        onChange={(value) => handleChange('phone', value)}
+                        prefix={<IconMail />}
+                      />
+
+                      <Form.Input
+                        field='sms_code'
+                        label={t('验证码')}
+                        placeholder={t('请输入验证码')}
+                        name='sms_code'
+                        onChange={(value) => handleChange('sms_code', value)}
+                        suffix={
+                          <Button
+                            onClick={sendSMSCode}
+                            loading={smsCodeLoading}
+                            disabled={smsButtonDisabled || smsCodeLoading}
+                          >
+                            {smsButtonDisabled
+                              ? `${t('重新发送')} (${smsCountdown})`
+                              : t('获取验证码')}
+                          </Button>
+                        }
+                      />
+
+                      <Form.Input
+                        field='password'
+                        label={t('密码（可选）')}
+                        placeholder={t('设置密码，最短 8 位')}
+                        name='password'
+                        mode='password'
+                        onChange={(value) => handleChange('password', value)}
+                        prefix={<IconLock />}
+                      />
+
+                      {(hasUserAgreement || hasPrivacyPolicy) && (
+                        <div className='pt-4'>
+                          <Checkbox
+                            checked={agreedToTerms}
+                            onChange={(e) => setAgreedToTerms(e.target.checked)}
+                          >
+                            <Text size='small' className='text-gray-600'>
+                              {t('我已阅读并同意')}
+                              {hasUserAgreement && (
+                                <>
+                                  <a
+                                    href='/user-agreement'
+                                    target='_blank'
+                                    rel='noopener noreferrer'
+                                    className='text-blue-600 hover:text-blue-800 mx-1'
+                                  >
+                                    {t('用户协议')}
+                                  </a>
+                                </>
+                              )}
+                              {hasUserAgreement && hasPrivacyPolicy && t('和')}
+                              {hasPrivacyPolicy && (
+                                <>
+                                  <a
+                                    href='/privacy-policy'
+                                    target='_blank'
+                                    rel='noopener noreferrer'
+                                    className='text-blue-600 hover:text-blue-800 mx-1'
+                                  >
+                                    {t('隐私政策')}
+                                  </a>
+                                </>
+                              )}
+                            </Text>
+                          </Checkbox>
+                        </div>
+                      )}
+
+                      <div className='space-y-2 pt-2'>
+                        <Button
+                          theme='solid'
+                          className='w-full !rounded-full'
+                          type='primary'
+                          htmlType='submit'
+                          onClick={handlePhoneRegister}
+                          loading={phoneRegisterLoading}
+                          disabled={
+                            (hasUserAgreement || hasPrivacyPolicy) && !agreedToTerms
+                          }
+                        >
+                          {t('注册并登录')}
                         </Button>
-                      }
-                    />
-                    <Form.Input
-                      field='verification_code'
-                      label={t('验证码')}
-                      placeholder={t('输入验证码')}
-                      name='verification_code'
-                      onChange={(value) =>
-                        handleChange('verification_code', value)
-                      }
-                      prefix={<IconKey />}
-                    />
-                  </>
+                      </div>
+                    </Form>
+                  </TabPane>
                 )}
-
-                {(hasUserAgreement || hasPrivacyPolicy) && (
-                  <div className='pt-4'>
-                    <Checkbox
-                      checked={agreedToTerms}
-                      onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    >
-                      <Text size='small' className='text-gray-600'>
-                        {t('我已阅读并同意')}
-                        {hasUserAgreement && (
-                          <>
-                            <a
-                              href='/user-agreement'
-                              target='_blank'
-                              rel='noopener noreferrer'
-                              className='text-blue-600 hover:text-blue-800 mx-1'
-                            >
-                              {t('用户协议')}
-                            </a>
-                          </>
-                        )}
-                        {hasUserAgreement && hasPrivacyPolicy && t('和')}
-                        {hasPrivacyPolicy && (
-                          <>
-                            <a
-                              href='/privacy-policy'
-                              target='_blank'
-                              rel='noopener noreferrer'
-                              className='text-blue-600 hover:text-blue-800 mx-1'
-                            >
-                              {t('隐私政策')}
-                            </a>
-                          </>
-                        )}
-                      </Text>
-                    </Checkbox>
-                  </div>
-                )}
-
-                <div className='space-y-2 pt-2'>
-                  <Button
-                    theme='solid'
-                    className='w-full !rounded-full'
-                    type='primary'
-                    htmlType='submit'
-                    onClick={handleSubmit}
-                    loading={registerLoading}
-                    disabled={
-                      (hasUserAgreement || hasPrivacyPolicy) && !agreedToTerms
-                    }
-                  >
-                    {t('注册')}
-                  </Button>
-                </div>
-              </Form>
+              </Tabs>
 
               {hasOAuthRegisterOptions && (
                 <>

@@ -50,6 +50,7 @@ type User struct {
 	Setting          string         `json:"setting" gorm:"type:text;column:setting"`
 	Remark           string         `json:"remark,omitempty" gorm:"type:varchar(255)" validate:"max=255"`
 	StripeCustomer   string         `json:"stripe_customer" gorm:"type:varchar(64);column:stripe_customer;index"`
+	Phone            string         `json:"phone" gorm:"index" validate:"max=20"`
 }
 
 func (user *User) ToBaseUser() *UserBase {
@@ -1045,4 +1046,22 @@ func RootUserExists() bool {
 		return false
 	}
 	return true
+}
+
+func IsPhoneAlreadyTaken(phone string) bool {
+	if phone == "" {
+		return false
+	}
+	return DB.Unscoped().Where("phone = ?", phone).Find(&User{}).RowsAffected == 1
+}
+
+func (user *User) FillUserByPhone() error {
+	if user.Phone == "" {
+		return errors.New("phone is empty")
+	}
+	err := DB.Where("phone = ?", user.Phone).First(user).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+	return err
 }

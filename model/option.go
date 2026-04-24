@@ -144,6 +144,12 @@ func InitOptionMap() {
 	common.OptionMap["HookEnabled"] = "false"
 	common.OptionMap["HookUrl"] = ""
 	common.OptionMap["HookSecret"] = ""
+	common.OptionMap["SmsEnabled"] = strconv.FormatBool(common.SMSEnabled)
+	common.OptionMap["SmsProvider"] = common.SMSProvider
+	common.OptionMap["SmsAccessKeyId"] = ""
+	common.OptionMap["SmsAccessKeySecret"] = ""
+	common.OptionMap["SmsSignName"] = ""
+	common.OptionMap["SmsTemplateCode"] = ""
 	//common.OptionMap["ChatLink"] = common.ChatLink
 	//common.OptionMap["ChatLink2"] = common.ChatLink2
 	common.OptionMap["QuotaPerUnit"] = strconv.FormatFloat(common.QuotaPerUnit, 'f', -1, 64)
@@ -320,6 +326,8 @@ func updateOptionMap(key string, value string) (err error) {
 			setting.DefaultUseAutoGroup = boolValue
 		case "ExposeRatioEnabled":
 			ratio_setting.SetExposeRatioEnabled(boolValue)
+		case "SmsEnabled":
+			common.SMSEnabled = boolValue
 		}
 	}
 	switch key {

@@ -7,6 +7,7 @@ package i18n
 const (
 	MsgInvalidParams     = "common.invalid_params"
 	MsgDatabaseError     = "common.database_error"
+	MsgTooManyRequests   = "common.too_many_requests"
 	MsgRetryLater        = "common.retry_later"
 	MsgGenerateFailed    = "common.generate_failed"
 	MsgNotFound          = "common.not_found"
@@ -26,6 +27,7 @@ const (
 	MsgAlreadyExists     = "common.already_exists"
 	MsgNameCannotBeEmpty = "common.name_cannot_be_empty"
 	MsgBatchTooMany      = "common.batch_too_many"
+	MsgSMSSendFailed     = "common.sms_send_failed"
 )
 
 // Auth middleware messages
@@ -82,6 +84,7 @@ const (
 	MsgUserExists                    = "user.exists"
 	MsgUserNotExists                 = "user.not_exists"
 	MsgUserDisabled                  = "user.disabled"
+	MsgUserAccountDisabled           = "user.account_disabled"
 	MsgUserSessionSaveFailed         = "user.session_save_failed"
 	MsgUserRequire2FA                = "user.require_2fa"
 	MsgUserEmailVerificationRequired = "user.email_verification_required"

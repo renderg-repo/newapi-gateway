@@ -102,6 +102,75 @@ const AccountManagement = ({
   const [customOAuthBindings, setCustomOAuthBindings] = React.useState([]);
   const [customOAuthLoading, setCustomOAuthLoading] = React.useState({});
 
+  const [showPhoneBindModal, setShowPhoneBindModal] = React.useState(false);
+  const [phoneInput, setPhoneInput] = React.useState('');
+  const [smsCodeInput, setSmsCodeInput] = React.useState('');
+  const [smsLoading, setSmsLoading] = React.useState(false);
+  const [smsCountdown, setSmsCountdown] = React.useState(60);
+  const [smsDisabled, setSmsDisabled] = React.useState(false);
+
+  React.useEffect(() => {
+    let interval = null;
+    if (smsDisabled && smsCountdown > 0) {
+      interval = setInterval(() => setSmsCountdown((c) => c - 1), 1000);
+    } else if (smsCountdown === 0) {
+      setSmsDisabled(false);
+      setSmsCountdown(60);
+    }
+    return () => clearInterval(interval);
+  }, [smsDisabled, smsCountdown]);
+
+  const sendPhoneSMSCode = async () => {
+    if (!phoneInput) {
+      showError(t('请输入手机号'));
+      return;
+    }
+    setSmsLoading(true);
+    try {
+      const res = await API.post('/api/sms/send', {
+        phone: phoneInput,
+        type: userState.user?.phone ? 'rebind' : 'register',
+      });
+      if (res.data.success) {
+        showSuccess(t('验证码发送成功'));
+        setSmsDisabled(true);
+      } else {
+        showError(res.data.message);
+      }
+    } catch (e) {
+      showError(t('发送失败'));
+    } finally {
+      setSmsLoading(false);
+    }
+  };
+
+  const bindPhone = async () => {
+    if (!phoneInput || !smsCodeInput) {
+      showError(t('请输入手机号和验证码'));
+      return;
+    }
+    try {
+      const url = userState.user?.phone
+        ? '/api/user/phone/rebind'
+        : '/api/user/phone/bind';
+      const res = await API.post(url, {
+        phone: phoneInput,
+        code: smsCodeInput,
+      });
+      if (res.data.success) {
+        showSuccess(t('手机号绑定成功'));
+        setShowPhoneBindModal(false);
+        setPhoneInput('');
+        setSmsCodeInput('');
+        window.location.reload();
+      } else {
+        showError(res.data.message);
+      }
+    } catch (e) {
+      showError(t('绑定失败'));
+    }
+  };
+
   // Fetch custom OAuth bindings
   const loadCustomOAuthBindings = async () => {
     try {
@@ -234,6 +303,44 @@ const AccountManagement = ({
                   </div>
                 </div>
               </Card>
+
+              {/* 手机号绑定 */}
+              {status.sms_enabled && (
+                <Card className='!rounded-xl'>
+                  <div className='flex items-center justify-between gap-3'>
+                    <div className='flex items-center flex-1 min-w-0'>
+                      <div className='w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mr-3 flex-shrink-0'>
+                        <IconLock
+                          size='default'
+                          className='text-slate-600 dark:text-slate-300'
+                        />
+                      </div>
+                      <div className='flex-1 min-w-0'>
+                        <div className='font-medium text-gray-900'>
+                          {t('手机号')}
+                        </div>
+                        <div className='text-sm text-gray-500 truncate'>
+                          {isBound(userState.user?.phone)
+                            ? userState.user?.phone
+                            : t('未绑定')}
+                        </div>
+                      </div>
+                    </div>
+                    <div className='flex-shrink-0'>
+                      <Button
+                        type='primary'
+                        theme='outline'
+                        size='small'
+                        onClick={() => setShowPhoneBindModal(true)}
+                      >
+                        {isBound(userState.user?.phone)
+                          ? t('修改绑定')
+                          : t('绑定')}
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              )}
 
               {/* 微信绑定 */}
               <Card className='!rounded-xl'>
@@ -767,6 +874,55 @@ const AccountManagement = ({
           </div>
         </TabPane>
       </Tabs>
+
+      {/* 手机号绑定 Modal */}
+      {status.sms_enabled && (
+        <Modal
+          title={
+            <div className='flex items-center'>
+              <div className='w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mr-3'>
+                <IconLock size='default' className='text-green-600 dark:text-green-400' />
+              </div>
+              {userState.user?.phone ? t('修改手机号') : t('绑定手机号')}
+            </div>
+          }
+          visible={showPhoneBindModal}
+          onOk={bindPhone}
+          onCancel={() => {
+            setShowPhoneBindModal(false);
+            setPhoneInput('');
+            setSmsCodeInput('');
+          }}
+          okText={t('绑定')}
+          centered={true}
+        >
+          <div className='my-4 space-y-4'>
+            <Input
+              value={phoneInput}
+              onChange={(value) => setPhoneInput(value)}
+              placeholder={t('请输入手机号')}
+              prefix={<IconLock />}
+            />
+            <Input
+              value={smsCodeInput}
+              onChange={(value) => setSmsCodeInput(value)}
+              placeholder={t('请输入验证码')}
+              suffix={
+                <Button
+                  onClick={sendPhoneSMSCode}
+                  loading={smsLoading}
+                  disabled={smsDisabled || smsLoading}
+                  size='small'
+                >
+                  {smsDisabled
+                    ? `${t('重新发送')} (${smsCountdown})`
+                    : t('获取验证码')}
+                </Button>
+              }
+            />
+          </div>
+        </Modal>
+      )}
     </Card>
   );
 };
