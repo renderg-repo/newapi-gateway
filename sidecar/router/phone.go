@@ -13,6 +13,7 @@ func RegisterPhoneAuthRoutes(apiRouter *gin.RouterGroup) {
 	// Phone authentication endpoints
 	userRoute := apiRouter.Group("/user")
 	{
+		userRoute.GET("/check-username", middleware.CriticalRateLimit(), controller.CheckUsername)
 		userRoute.POST("/login/phone", middleware.CriticalRateLimit(), middleware.TurnstileCheck(), controller.PhoneLogin)
 		userRoute.POST("/register/phone", middleware.CriticalRateLimit(), middleware.TurnstileCheck(), controller.PhoneRegister)
 

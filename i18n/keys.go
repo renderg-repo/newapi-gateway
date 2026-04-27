@@ -117,6 +117,8 @@ const (
 	MsgUserTelegramNotBound          = "user.telegram_not_bound"
 	MsgUserLinuxDOIdEmpty            = "user.linux_do_id_empty"
 	MsgUserQuotaChangeZero           = "user.quota_change_zero"
+	MsgUserInvalidUsernameFormat     = "user.invalid_username_format"
+	MsgPhoneAlreadyBound             = "user.phone_already_bound"
 )
 
 // Quota related messages

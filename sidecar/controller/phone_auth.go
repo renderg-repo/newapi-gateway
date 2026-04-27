@@ -2,7 +2,9 @@ package controller
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/i18n"
@@ -12,6 +14,12 @@ import (
 	"gorm.io/gorm"
 )
 
+var usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9_]{3,20}$`)
+
+func validateUsername(username string) bool {
+	return usernameRegex.MatchString(username)
+}
+
 type PhoneLoginRequest struct {
 	Phone string `json:"phone" binding:"required"`
 	Code  string `json:"code" binding:"required"`
@@ -20,6 +28,7 @@ type PhoneLoginRequest struct {
 type PhoneRegisterRequest struct {
 	Phone    string `json:"phone" binding:"required"`
 	Code     string `json:"code" binding:"required"`
+	Username string `json:"username"`
 	Password string `json:"password"`
 	AffCode  string `json:"aff_code"`
 }
@@ -52,6 +61,22 @@ func setupLogin(user *model.User, c *gin.Context) {
 			"status":       user.Status,
 			"group":        user.Group,
 		},
+	})
+}
+
+func CheckUsername(c *gin.Context) {
+	username := c.Query("username")
+	if username == "" {
+		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
+		return
+	}
+	if !validateUsername(username) {
+		common.ApiErrorI18n(c, i18n.MsgUserInvalidUsernameFormat)
+		return
+	}
+	exists, _ := model.CheckUserExistOrDeleted(username, "")
+	common.ApiSuccess(c, gin.H{
+		"exists": exists,
 	})
 }
 
@@ -118,9 +143,19 @@ func PhoneRegister(c *gin.Context) {
 		return
 	}
 
-	username := "phone_" + req.Phone
+	username := req.Username
+	if username == "" {
+		username = "phone_" + req.Phone
+	} else if !validateUsername(username) {
+		common.ApiErrorI18n(c, i18n.MsgUserInvalidUsernameFormat)
+		return
+	}
 	exist, _ := model.CheckUserExistOrDeleted(username, "")
 	for exist {
+		if req.Username != "" {
+			common.ApiErrorI18n(c, i18n.MsgUserExists)
+			return
+		}
 		username = "phone_" + req.Phone + "_" + common.GetRandomString(4)
 		exist, _ = model.CheckUserExistOrDeleted(username, "")
 	}
@@ -174,12 +209,14 @@ func PhoneBind(c *gin.Context) {
 	common.DeleteKey(req.Phone, common.SMSVerificationPurpose)
 
 	if model.IsPhoneAlreadyTaken(req.Phone) {
-		common.ApiErrorI18n(c, i18n.MsgUserExists)
+		common.SysLog(fmt.Sprintf("phone bind failed: phone %s already taken by another user", req.Phone))
+		common.ApiErrorI18n(c, i18n.MsgPhoneAlreadyBound)
 		return
 	}
 
 	userId := c.GetInt("id")
 	if err := model.DB.Model(&model.User{}).Where("id = ?", userId).Update("phone", req.Phone).Error; err != nil {
+		common.SysLog(fmt.Sprintf("phone bind db error for user %d: %v", userId, err))
 		common.ApiErrorI18n(c, i18n.MsgDatabaseError)
 		return
 	}
@@ -206,12 +243,14 @@ func PhoneRebind(c *gin.Context) {
 	common.DeleteKey(req.Phone, common.SMSVerificationPurpose)
 
 	if model.IsPhoneAlreadyTaken(req.Phone) {
-		common.ApiErrorI18n(c, i18n.MsgUserExists)
+		common.SysLog(fmt.Sprintf("phone rebind failed: phone %s already taken by another user", req.Phone))
+		common.ApiErrorI18n(c, i18n.MsgPhoneAlreadyBound)
 		return
 	}
 
 	userId := c.GetInt("id")
 	if err := model.DB.Model(&model.User{}).Where("id = ?", userId).Update("phone", req.Phone).Error; err != nil {
+		common.SysLog(fmt.Sprintf("phone rebind db error for user %d: %v", userId, err))
 		common.ApiErrorI18n(c, i18n.MsgDatabaseError)
 		return
 	}
