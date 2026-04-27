@@ -153,10 +153,9 @@ const AccountManagement = ({
       const url = userState.user?.phone
         ? '/api/user/phone/rebind'
         : '/api/user/phone/bind';
-      const res = await API.post(url, {
-        phone: phoneInput,
-        code: smsCodeInput,
-      });
+      const res = userState.user?.phone
+        ? await API.put(url, { phone: phoneInput, code: smsCodeInput })
+        : await API.post(url, { phone: phoneInput, code: smsCodeInput });
       if (res.data.success) {
         showSuccess(t('手机号绑定成功'));
         setShowPhoneBindModal(false);
@@ -167,7 +166,7 @@ const AccountManagement = ({
         showError(res.data.message);
       }
     } catch (e) {
-      showError(t('绑定失败'));
+      showError(e.response?.data?.message || t('绑定失败'));
     }
   };
 

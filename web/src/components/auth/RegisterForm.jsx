@@ -300,6 +300,22 @@ const RegisterForm = () => {
     }
   };
 
+  const checkUsernameExists = async () => {
+    if (!inputs.username || !/^[a-zA-Z0-9_]{3,20}$/.test(inputs.username)) {
+      return;
+    }
+    try {
+      const res = await API.get('/api/user/check-username', {
+        params: { username: inputs.username },
+      });
+      if (res.data.success && res.data.data?.exists) {
+        showError(t('用户名已存在'));
+      }
+    } catch (error) {
+      // ignore network errors
+    }
+  };
+
   const sendSMSCode = async () => {
     if (!inputs.phone) {
       showInfo(t('请输入手机号'));
@@ -334,6 +350,10 @@ const RegisterForm = () => {
       showInfo(t('请输入手机号和验证码'));
       return;
     }
+    if (inputs.username && !/^[a-zA-Z0-9_]{3,20}$/.test(inputs.username)) {
+      showInfo(t('用户名格式不正确，应为3-20位字母、数字或下划线'));
+      return;
+    }
     if (turnstileEnabled && turnstileToken === '') {
       showInfo('请稍后几秒重试，Turnstile 正在检查用户环境！');
       return;
@@ -348,6 +368,7 @@ const RegisterForm = () => {
         {
           phone: inputs.phone,
           code: inputs.sms_code,
+          username: inputs.username,
           password: inputs.password,
           aff_code: affCode,
         },
@@ -788,6 +809,16 @@ const RegisterForm = () => {
                 {status.sms_enabled && (
                   <TabPane tab={t('手机号')} itemKey='phone'>
                     <Form className='space-y-3 mt-4'>
+                      <Form.Input
+                        field='username'
+                        label={t('用户名（可选）')}
+                        placeholder={t('不填写则自动生成')}
+                        name='username'
+                        onChange={(value) => handleChange('username', value)}
+                        onBlur={checkUsernameExists}
+                        prefix={<IconUser />}
+                      />
+
                       <Form.Input
                         field='phone'
                         label={t('手机号')}
