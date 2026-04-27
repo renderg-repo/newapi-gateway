@@ -150,6 +150,7 @@ func InitOptionMap() {
 	common.OptionMap["SmsAccessKeySecret"] = ""
 	common.OptionMap["SmsSignName"] = ""
 	common.OptionMap["SmsTemplateCode"] = ""
+	common.OptionMap["SmsTemplateVar"] = "code"
 	//common.OptionMap["ChatLink"] = common.ChatLink
 	//common.OptionMap["ChatLink2"] = common.ChatLink2
 	common.OptionMap["QuotaPerUnit"] = strconv.FormatFloat(common.QuotaPerUnit, 'f', -1, 64)
@@ -450,6 +451,8 @@ func updateOptionMap(key string, value string) (err error) {
 		common.TurnstileSiteKey = value
 	case "TurnstileSecretKey":
 		common.TurnstileSecretKey = value
+	case "SmsProvider":
+		common.SMSProvider = value
 	case "QuotaForNewUser":
 		common.QuotaForNewUser, _ = strconv.Atoi(value)
 	case "QuotaForInviter":

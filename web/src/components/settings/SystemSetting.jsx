@@ -101,6 +101,13 @@ const SystemSetting = () => {
     LinuxDOClientSecret: '',
     LinuxDOMinimumTrustLevel: '',
     ServerAddress: '',
+    SmsEnabled: '',
+    SmsProvider: '',
+    SmsAccessKeyId: '',
+    SmsAccessKeySecret: '',
+    SmsSignName: '',
+    SmsTemplateCode: '',
+    SmsTemplateVar: '',
     // SSRF防护配置
     'fetch_setting.enable_ssrf_protection': true,
     'fetch_setting.allow_private_ip': '',
@@ -190,6 +197,7 @@ const SystemSetting = () => {
           case 'passkey.enabled':
           case 'passkey.allow_insecure_origin':
           case 'WorkerAllowHttpImageRequestEnabled':
+          case 'SmsEnabled':
             item.value = toBoolean(item.value);
             break;
           case 'passkey.origins':
@@ -317,6 +325,34 @@ const SystemSetting = () => {
   const submitServerAddress = async () => {
     let ServerAddress = removeTrailingSlash(inputs.ServerAddress);
     await updateOptions([{ key: 'ServerAddress', value: ServerAddress }]);
+  };
+
+  const submitSMS = async () => {
+    const options = [
+      { key: 'SmsEnabled', value: inputs.SmsEnabled ? 'true' : 'false' },
+    ];
+    if (originInputs['SmsProvider'] !== inputs.SmsProvider) {
+      options.push({ key: 'SmsProvider', value: inputs.SmsProvider });
+    }
+    if (originInputs['SmsAccessKeyId'] !== inputs.SmsAccessKeyId) {
+      options.push({ key: 'SmsAccessKeyId', value: inputs.SmsAccessKeyId });
+    }
+    if (
+      originInputs['SmsAccessKeySecret'] !== inputs.SmsAccessKeySecret &&
+      inputs.SmsAccessKeySecret !== ''
+    ) {
+      options.push({ key: 'SmsAccessKeySecret', value: inputs.SmsAccessKeySecret });
+    }
+    if (originInputs['SmsSignName'] !== inputs.SmsSignName) {
+      options.push({ key: 'SmsSignName', value: inputs.SmsSignName });
+    }
+    if (originInputs['SmsTemplateCode'] !== inputs.SmsTemplateCode) {
+      options.push({ key: 'SmsTemplateCode', value: inputs.SmsTemplateCode });
+    }
+    if (originInputs['SmsTemplateVar'] !== inputs.SmsTemplateVar) {
+      options.push({ key: 'SmsTemplateVar', value: inputs.SmsTemplateVar });
+    }
+    await updateOptions(options);
   };
 
   const submitSMTP = async () => {
@@ -1093,6 +1129,97 @@ const SystemSetting = () => {
                       </Form.Checkbox>
                     </Col>
                   </Row>
+                </Form.Section>
+              </Card>
+
+              <Card>
+                <Form.Section text={t('配置短信登录')}>
+                  <Text>{t('用以支持通过手机号验证码进行登录注册')}</Text>
+                  <Banner
+                    type='info'
+                    description={t(
+                      '短信服务商需要提前在对应平台申请签名和模板代码，模板中需包含 ${code} 变量'
+                    )}
+                    style={{ marginBottom: 20, marginTop: 16 }}
+                  />
+                  <Row
+                    gutter={{ xs: 8, sm: 16, md: 24, lg: 24, xl: 24, xxl: 24 }}
+                  >
+                    <Col xs={24} sm={24} md={12} lg={12} xl={12}>
+                      <Form.Checkbox field='SmsEnabled' noLabel>
+                        {t('启用短信登录')}
+                      </Form.Checkbox>
+                    </Col>
+                    <Col xs={24} sm={24} md={12} lg={12} xl={12}>
+                      <Form.Select
+                        field='SmsProvider'
+                        label={t('短信服务商')}
+                        placeholder={t('请选择短信服务商')}
+                        optionList={[
+                          { label: t('阿里云'), value: 'aliyun' },
+                          { label: t('腾讯云'), value: 'tencent' },
+                          { label: 'Twilio', value: 'twilio' },
+                        ]}
+                      />
+                    </Col>
+                  </Row>
+                  <Row
+                    gutter={{ xs: 8, sm: 16, md: 24, lg: 24, xl: 24, xxl: 24 }}
+                    style={{ marginTop: 16 }}
+                  >
+                    <Col xs={24} sm={24} md={12} lg={12} xl={12}>
+                      <Form.Input
+                        field='SmsAccessKeyId'
+                        label={t('AccessKey ID')}
+                        placeholder={t('短信服务商的 AccessKey ID')}
+                      />
+                    </Col>
+                    <Col xs={24} sm={24} md={12} lg={12} xl={12}>
+                      <Form.Input
+                        field='SmsAccessKeySecret'
+                        label={t('AccessKey Secret')}
+                        type='password'
+                        placeholder={t('敏感信息不会发送到前端显示')}
+                      />
+                    </Col>
+                  </Row>
+                  <Row
+                    gutter={{ xs: 8, sm: 16, md: 24, lg: 24, xl: 24, xxl: 24 }}
+                    style={{ marginTop: 16 }}
+                  >
+                    <Col xs={24} sm={24} md={12} lg={12} xl={12}>
+                      <Form.Input
+                        field='SmsSignName'
+                        label={t('短信签名')}
+                        placeholder={t('已在平台审核通过的短信签名')}
+                      />
+                    </Col>
+                    <Col xs={24} sm={24} md={12} lg={12} xl={12}>
+                      <Form.Input
+                        field='SmsTemplateCode'
+                        label={t('短信模板代码')}
+                        placeholder={t('短信模板代码，如 SMS_12345678')}
+                      />
+                    </Col>
+                  </Row>
+                  <Row
+                    gutter={{ xs: 8, sm: 16, md: 24, lg: 24, xl: 24, xxl: 24 }}
+                    style={{ marginTop: 16 }}
+                  >
+                    <Col xs={24} sm={24} md={12} lg={12} xl={12}>
+                      <Form.Input
+                        field='SmsTemplateVar'
+                        label={t('模板变量名')}
+                        placeholder={t('阿里云模板中的变量名，默认为 code')}
+                        extraText={t(
+                          '后端会将其构造成 JSON 格式作为模板参数发送，如 {"code":"123456"}'
+                        )}
+                      />
+                    </Col>
+                  </Row>
+                  <Button onClick={submitSMS} style={{ marginTop: 16 }}>
+                    {t('保存短信设置')}
+                  </Button>
                 </Form.Section>
               </Card>
 

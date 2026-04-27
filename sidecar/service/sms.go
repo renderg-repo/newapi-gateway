@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/aliyun/alibaba-cloud-sdk-go/services/dysmsapi"
 )
 
 type SMSProvider interface {
@@ -14,34 +15,23 @@ type SMSProvider interface {
 }
 
 var (
-	sendRecord   sync.Map // phone -> lastSendTime
-	provider     SMSProvider
-	providerOnce sync.Once
+	sendRecord sync.Map // phone -> lastSendTime
 )
 
 func getProvider() SMSProvider {
-	providerOnce.Do(func() {
-		if !common.SMSEnabled {
-			provider = nil
-			return
-		}
-		switch common.SMSProvider {
-		case "aliyun":
-			provider = &AliyunSMSProvider{}
-		case "tencent":
-			provider = &TencentSMSProvider{}
-		case "twilio":
-			provider = &TwilioSMSProvider{}
-		default:
-			provider = nil
-		}
-	})
-	return provider
-}
-
-func InvalidateProvider() {
-	provider = nil
-	providerOnce = sync.Once{}
+	if !common.SMSEnabled {
+		return nil
+	}
+	switch common.SMSProvider {
+	case "aliyun":
+		return &AliyunSMSProvider{}
+	case "tencent":
+		return &TencentSMSProvider{}
+	case "twilio":
+		return &TwilioSMSProvider{}
+	default:
+		return nil
+	}
 }
 
 func CanSendToPhone(phone string) bool {
@@ -78,8 +68,32 @@ func (a *AliyunSMSProvider) Send(phone string, code string) error {
 		return errors.New("aliyun sms config incomplete")
 	}
 
-	// TODO: integrate Alibaba Cloud SMS SDK (github.com/aliyun/alibaba-cloud-sdk-go/services/dysmsapi)
-	common.SysLog(fmt.Sprintf("[AliyunSMS] send code %s to %s (sign=%s, template=%s)", code, phone, signName, templateCode))
+	client, err := dysmsapi.NewClientWithAccessKey("cn-hangzhou", accessKeyId, accessSecret)
+	if err != nil {
+		return fmt.Errorf("aliyun sms client init failed: %w", err)
+	}
+
+	request := dysmsapi.CreateSendSmsRequest()
+	request.Scheme = "https"
+	request.PhoneNumbers = phone
+	request.SignName = signName
+	request.TemplateCode = templateCode
+
+	templateVar := common.OptionMap["SmsTemplateVar"]
+	if templateVar == "" {
+		templateVar = "code"
+	}
+	request.TemplateParam = fmt.Sprintf(`{"%s":"%s"}`, templateVar, code)
+
+	response, err := client.SendSms(request)
+	if err != nil {
+		return fmt.Errorf("aliyun sms send failed: %w", err)
+	}
+	if response.Code != "OK" {
+		return fmt.Errorf("aliyun sms send error: %s - %s", response.Code, response.Message)
+	}
+
+	common.SysLog(fmt.Sprintf("[AliyunSMS] send code %s to %s success, requestId=%s", code, phone, response.RequestId))
 	return nil
 }
 

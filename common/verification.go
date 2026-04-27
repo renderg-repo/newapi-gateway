@@ -1,12 +1,21 @@
 package common
 
 import (
+	"math/rand"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+func GenerateNumericVerificationCode(length int) string {
+	var sb strings.Builder
+	for range length {
+		sb.WriteByte(byte('0' + rand.Intn(10)))
+	}
+	return sb.String()
+}
 
 type verificationValue struct {
 	code string

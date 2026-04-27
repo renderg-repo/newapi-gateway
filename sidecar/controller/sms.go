@@ -30,8 +30,8 @@ func SendSMSCode(c *gin.Context) {
 		return
 	}
 
-	// generate 6-digit code
-	code := common.GenerateVerificationCode(6)
+	// generate 6-digit numeric code
+	code := common.GenerateNumericVerificationCode(6)
 	common.RegisterVerificationCodeWithKey(req.Phone, code, common.SMSVerificationPurpose)
 
 	if err := service.SendSMS(req.Phone, code); err != nil {
