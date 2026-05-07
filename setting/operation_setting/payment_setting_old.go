@@ -17,24 +17,7 @@ var Price = 7.3
 var MinTopUp = 1
 var USDExchangeRate = 7.3
 
-var PayMethods = []map[string]string{
-	{
-		"name":  "支付宝",
-		"color": "rgba(var(--semi-blue-5), 1)",
-		"type":  "alipay",
-	},
-	{
-		"name":  "微信",
-		"color": "rgba(var(--semi-green-5), 1)",
-		"type":  "wxpay",
-	},
-	{
-		"name":      "自定义1",
-		"color":     "black",
-		"type":      "custom1",
-		"min_topup": "50",
-	},
-}
+var PayMethods = []map[string]string{}
 
 func UpdatePayMethodsByJsonString(jsonString string) error {
 	PayMethods = make([]map[string]string, 0)

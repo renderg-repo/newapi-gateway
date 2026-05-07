@@ -78,24 +78,74 @@ func GetTopUpInfo(c *gin.Context) {
 		}
 	}
 
+	// 微信支付
+	enableWechatPay := setting.WechatPayEnabled &&
+		setting.WechatPayAppId != "" &&
+		setting.WechatPayMchId != "" &&
+		setting.WechatPayApiKey != ""
+	if enableWechatPay {
+		hasWechatPay := false
+		for _, method := range payMethods {
+			if method["type"] == "wechatpay_native" {
+				hasWechatPay = true
+				break
+			}
+		}
+		if !hasWechatPay {
+			payMethods = append(payMethods, map[string]string{
+				"name":      "微信支付",
+				"type":      "wechatpay_native",
+				"color":     "rgba(var(--semi-green-5), 1)",
+				"min_topup": strconv.Itoa(setting.WechatPayMinTopUp),
+			})
+		}
+	}
+
+	// 支付宝
+	enableAlipay := setting.AlipayEnabled &&
+		setting.AlipayAppId != "" &&
+		setting.AlipayPrivateKey != "" &&
+		setting.AlipayPublicKey != ""
+	if enableAlipay {
+		hasAlipay := false
+		for _, method := range payMethods {
+			if method["type"] == "alipay_page" {
+				hasAlipay = true
+				break
+			}
+		}
+		if !hasAlipay {
+			payMethods = append(payMethods, map[string]string{
+				"name":      "支付宝",
+				"type":      "alipay_page",
+				"color":     "rgba(var(--semi-blue-5), 1)",
+				"min_topup": strconv.Itoa(setting.AlipayMinTopUp),
+			})
+		}
+	}
+
 	data := gin.H{
-		"enable_online_topup": operation_setting.PayAddress != "" && operation_setting.EpayId != "" && operation_setting.EpayKey != "",
-		"enable_stripe_topup": setting.StripeApiSecret != "" && setting.StripeWebhookSecret != "" && setting.StripePriceId != "",
-		"enable_creem_topup":  setting.CreemApiKey != "" && setting.CreemProducts != "[]",
-		"enable_waffo_topup": enableWaffo,
+		"enable_online_topup":    operation_setting.PayAddress != "" && operation_setting.EpayId != "" && operation_setting.EpayKey != "",
+		"enable_stripe_topup":    setting.StripeApiSecret != "" && setting.StripeWebhookSecret != "" && setting.StripePriceId != "",
+		"enable_creem_topup":     setting.CreemApiKey != "" && setting.CreemProducts != "[]",
+		"enable_waffo_topup":     enableWaffo,
+		"enable_wechatpay_topup": enableWechatPay,
+		"enable_alipay_topup":    enableAlipay,
 		"waffo_pay_methods": func() interface{} {
 			if enableWaffo {
 				return setting.GetWaffoPayMethods()
 			}
 			return nil
 		}(),
-		"creem_products": setting.CreemProducts,
-		"pay_methods":         payMethods,
-		"min_topup":           operation_setting.MinTopUp,
-		"stripe_min_topup":    setting.StripeMinTopUp,
-		"waffo_min_topup":     setting.WaffoMinTopUp,
-		"amount_options":      operation_setting.GetPaymentSetting().AmountOptions,
-		"discount":            operation_setting.GetPaymentSetting().AmountDiscount,
+		"creem_products":       setting.CreemProducts,
+		"wechatpay_min_topup":  setting.WechatPayMinTopUp,
+		"alipay_min_topup":     setting.AlipayMinTopUp,
+		"pay_methods":          payMethods,
+		"min_topup":            operation_setting.MinTopUp,
+		"stripe_min_topup":     setting.StripeMinTopUp,
+		"waffo_min_topup":      setting.WaffoMinTopUp,
+		"amount_options":       operation_setting.GetPaymentSetting().AmountOptions,
+		"discount":             operation_setting.GetPaymentSetting().AmountDiscount,
 	}
 	common.ApiSuccess(c, data)
 }
