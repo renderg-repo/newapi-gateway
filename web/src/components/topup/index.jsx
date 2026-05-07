@@ -29,6 +29,8 @@ import {
   copy,
   getQuotaPerUnit,
 } from '../../helpers';
+import { pluginRegistry } from '../../helpers/pluginRegistry';
+import { wechatPayTopUp, alipayTopUp } from '../../sidecar/frontend/payment-native/actions';
 import { Modal, Toast } from '@douyinfe/semi-ui';
 import { useTranslation } from 'react-i18next';
 import { UserContext } from '../../context/User';
@@ -75,6 +77,12 @@ const TopUp = () => {
   const [enableWaffoTopUp, setEnableWaffoTopUp] = useState(false);
   const [waffoPayMethods, setWaffoPayMethods] = useState([]);
   const [waffoMinTopUp, setWaffoMinTopUp] = useState(1);
+
+  // 微信/支付宝官方支付状态
+  const [enableWechatPayTopUp, setEnableWechatPayTopUp] = useState(false);
+  const [enableAlipayTopUp, setEnableAlipayTopUp] = useState(false);
+  const [wechatPayMinTopUp, setWechatPayMinTopUp] = useState(1);
+  const [alipayMinTopUp, setAlipayMinTopUp] = useState(1);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [open, setOpen] = useState(false);
@@ -157,6 +165,12 @@ const TopUp = () => {
   };
 
   const preTopUp = async (payment) => {
+    const action = pluginRegistry.getTopupAction(payment);
+    if (action) {
+      await action();
+      return;
+    }
+
     if (payment === 'stripe') {
       if (!enableStripeTopUp) {
         showError(t('管理员未开启Stripe充值！'));
@@ -361,6 +375,31 @@ const TopUp = () => {
     }
   };
 
+  // Sidecar 充值动作包装器
+  const handleWechatPayTopUp = React.useCallback(async () => {
+    await wechatPayTopUp({
+      topUpCount,
+      minTopUp: wechatPayMinTopUp,
+      setPaymentLoading,
+      t,
+      getUserQuota,
+      setOpenHistory,
+    });
+  }, [topUpCount, wechatPayMinTopUp, setPaymentLoading, t, getUserQuota, setOpenHistory]);
+
+  const handleAlipayTopUp = React.useCallback(async () => {
+    await alipayTopUp({
+      topUpCount,
+      minTopUp: alipayMinTopUp,
+      setPaymentLoading,
+      t,
+    });
+  }, [topUpCount, alipayMinTopUp, setPaymentLoading, t]);
+
+  // 注册到 plugin registry
+  pluginRegistry.registerTopupAction('wechatpay_native', handleWechatPayTopUp);
+  pluginRegistry.registerTopupAction('alipay_page', handleAlipayTopUp);
+
   const getSubscriptionPlans = async () => {
     setSubscriptionLoading(true);
     try {
@@ -481,13 +520,6 @@ const TopUp = () => {
           const enableStripeTopUp = data.enable_stripe_topup || false;
           const enableOnlineTopUp = data.enable_online_topup || false;
           const enableCreemTopUp = data.enable_creem_topup || false;
-          const minTopUpValue = enableOnlineTopUp
-            ? data.min_topup
-            : enableStripeTopUp
-              ? data.stripe_min_topup
-              : data.enable_waffo_topup
-                ? data.waffo_min_topup
-                : 1;
           setEnableOnlineTopUp(enableOnlineTopUp);
           setEnableStripeTopUp(enableStripeTopUp);
           setEnableCreemTopUp(enableCreemTopUp);
@@ -495,6 +527,28 @@ const TopUp = () => {
           setEnableWaffoTopUp(enableWaffoTopUp);
           setWaffoPayMethods(data.waffo_pay_methods || []);
           setWaffoMinTopUp(data.waffo_min_topup || 1);
+
+          // 微信/支付宝官方支付
+          const enableWechatPayTopUp = data.enable_wechatpay_topup || false;
+          const enableAlipayTopUp = data.enable_alipay_topup || false;
+          setEnableWechatPayTopUp(enableWechatPayTopUp);
+          setEnableAlipayTopUp(enableAlipayTopUp);
+          setWechatPayMinTopUp(data.wechatpay_min_topup || 1);
+          setAlipayMinTopUp(data.alipay_min_topup || 1);
+
+          // 计算最小充值金额时考虑所有启用渠道的 min_topup
+          let minTopUpValue = 1;
+          if (enableOnlineTopUp) {
+            minTopUpValue = data.min_topup;
+          } else if (enableStripeTopUp) {
+            minTopUpValue = data.stripe_min_topup;
+          } else if (enableWaffoTopUp) {
+            minTopUpValue = data.waffo_min_topup;
+          } else if (enableWechatPayTopUp) {
+            minTopUpValue = data.wechatpay_min_topup || 1;
+          } else if (enableAlipayTopUp) {
+            minTopUpValue = data.alipay_min_topup || 1;
+          }
           setMinTopUp(minTopUpValue);
           setTopUpCount(minTopUpValue);
 
@@ -791,6 +845,8 @@ const TopUp = () => {
           enableWaffoTopUp={enableWaffoTopUp}
           waffoTopUp={waffoTopUp}
           waffoPayMethods={waffoPayMethods}
+          enableWechatPayTopUp={enableWechatPayTopUp}
+          enableAlipayTopUp={enableAlipayTopUp}
           presetAmounts={presetAmounts}
           selectedPreset={selectedPreset}
           selectPresetAmount={selectPresetAmount}

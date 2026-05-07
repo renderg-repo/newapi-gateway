@@ -46,6 +46,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { IconGift } from '@douyinfe/semi-icons';
+import { pluginRegistry } from '../../helpers/pluginRegistry';
 import { useMinimumLoadingTime } from '../../hooks/common/useMinimumLoadingTime';
 import { getCurrencyConfig } from '../../helpers/render';
 import SubscriptionPlansCard from './SubscriptionPlansCard';
@@ -90,6 +91,8 @@ const RechargeCard = ({
   enableWaffoTopUp,
   waffoTopUp,
   waffoPayMethods,
+  enableWechatPayTopUp,
+  enableAlipayTopUp,
   subscriptionLoading = false,
   subscriptionPlans = [],
   billingPreference,
@@ -102,6 +105,7 @@ const RechargeCard = ({
   const redeemFormApiRef = useRef(null);
   const initialTabSetRef = useRef(false);
   const showAmountSkeleton = useMinimumLoadingTime(amountLoading);
+  const iconMap = { SiAlipay, SiWechat, SiStripe, CreditCard };
   const [activeTab, setActiveTab] = useState('topup');
   const shouldShowSubscription =
     !subscriptionLoading && subscriptionPlans.length > 0;
@@ -227,19 +231,19 @@ const RechargeCard = ({
           <div className='py-8 flex justify-center'>
             <Spin size='large' />
           </div>
-        ) : enableOnlineTopUp || enableStripeTopUp || enableCreemTopUp || enableWaffoTopUp ? (
+        ) : enableOnlineTopUp || enableStripeTopUp || enableCreemTopUp || enableWaffoTopUp || enableWechatPayTopUp || enableAlipayTopUp ? (
           <Form
             getFormApi={(api) => (onlineFormApiRef.current = api)}
             initValues={{ topUpCount: topUpCount }}
           >
             <div className='space-y-6'>
-              {(enableOnlineTopUp || enableStripeTopUp || enableWaffoTopUp) && (
+              {(enableOnlineTopUp || enableStripeTopUp || enableWaffoTopUp || enableWechatPayTopUp || enableAlipayTopUp) && (
                 <Row gutter={12}>
                   <Col xs={24} sm={24} md={24} lg={10} xl={10}>
                     <Form.InputNumber
                       field='topUpCount'
                       label={t('充值数量')}
-                      disabled={!enableOnlineTopUp && !enableStripeTopUp && !enableWaffoTopUp}
+                      disabled={!enableOnlineTopUp && !enableStripeTopUp && !enableWaffoTopUp && !enableWechatPayTopUp && !enableAlipayTopUp}
                       placeholder={
                         t('充值数量，最低 ') + renderQuotaWithAmount(minTopUp)
                       }
@@ -297,11 +301,11 @@ const RechargeCard = ({
                         <Space wrap>
                           {payMethods.filter(m => m.type !== 'waffo').map((payMethod) => {
                             const minTopupVal = Number(payMethod.min_topup) || 0;
-                            const isStripe = payMethod.type === 'stripe';
-                            const disabled =
-                              (!enableOnlineTopUp && !isStripe) ||
-                              (!enableStripeTopUp && isStripe) ||
-                              minTopupVal > Number(topUpCount || 0);
+                            const disabled = minTopupVal > Number(topUpCount || 0);
+
+                            const meta = pluginRegistry.getPaymentGateway(payMethod.type);
+                            const IconComponent = iconMap[meta?.icon] || CreditCard;
+                            const iconColor = meta?.iconColor || payMethod.color || 'var(--semi-color-text-2)';
 
                             const buttonEl = (
                               <Button
@@ -314,21 +318,7 @@ const RechargeCard = ({
                                   paymentLoading && payWay === payMethod.type
                                 }
                                 icon={
-                                  payMethod.type === 'alipay' ? (
-                                    <SiAlipay size={18} color='#1677FF' />
-                                  ) : payMethod.type === 'wxpay' ? (
-                                    <SiWechat size={18} color='#07C160' />
-                                  ) : payMethod.type === 'stripe' ? (
-                                    <SiStripe size={18} color='#635BFF' />
-                                  ) : (
-                                    <CreditCard
-                                      size={18}
-                                      color={
-                                        payMethod.color ||
-                                        'var(--semi-color-text-2)'
-                                      }
-                                    />
-                                  )
+                                  <IconComponent size={18} color={iconColor} />
                                 }
                                 className='!rounded-lg !px-4 !py-2'
                               >
@@ -336,8 +326,7 @@ const RechargeCard = ({
                               </Button>
                             );
 
-                            return disabled &&
-                              minTopupVal > Number(topUpCount || 0) ? (
+                            return disabled ? (
                               <Tooltip
                                 content={
                                   t('此支付方式最低充值金额为') +
@@ -361,7 +350,7 @@ const RechargeCard = ({
                 </Row>
               )}
 
-              {(enableOnlineTopUp || enableStripeTopUp || enableWaffoTopUp) && (
+              {(enableOnlineTopUp || enableStripeTopUp || enableWaffoTopUp || enableWechatPayTopUp || enableAlipayTopUp) && (
                 <Form.Slot
                   label={
                     <div className='flex items-center gap-2'>

@@ -24,6 +24,9 @@ import SettingsPaymentGateway from '../../pages/Setting/Payment/SettingsPaymentG
 import SettingsPaymentGatewayStripe from '../../pages/Setting/Payment/SettingsPaymentGatewayStripe';
 import SettingsPaymentGatewayCreem from '../../pages/Setting/Payment/SettingsPaymentGatewayCreem';
 import SettingsPaymentGatewayWaffo from '../../pages/Setting/Payment/SettingsPaymentGatewayWaffo';
+import { pluginRegistry } from '../../helpers/pluginRegistry';
+// 触发 sidecar 前端注册
+import '../../sidecar/frontend/payment-native';
 import { API, showError, toBoolean } from '../../helpers';
 import { useTranslation } from 'react-i18next';
 
@@ -48,6 +51,21 @@ const PaymentSetting = () => {
     StripeUnitPrice: 8.0,
     StripeMinTopUp: 1,
     StripePromotionCodesEnabled: false,
+
+    WechatPayEnabled: false,
+    WechatPayAppId: '',
+    WechatPayMchId: '',
+    WechatPayApiKey: '',
+    WechatPayUnitPrice: 7.3,
+    WechatPayMinTopUp: 1,
+
+    AlipayEnabled: false,
+    AlipayAppId: '',
+    AlipayPrivateKey: '',
+    AlipayPublicKey: '',
+    AlipayGatewayUrl: '',
+    AlipayUnitPrice: 7.3,
+    AlipayMinTopUp: 1,
   });
 
   let [loading, setLoading] = useState(false);
@@ -147,6 +165,11 @@ const PaymentSetting = () => {
         <Card style={{ marginTop: '10px' }}>
           <SettingsPaymentGatewayWaffo options={inputs} refresh={onRefresh} />
         </Card>
+        {pluginRegistry.getAllSettingCards().map((CardComponent, idx) => (
+          <Card key={idx} style={{ marginTop: '10px' }}>
+            <CardComponent options={inputs} refresh={onRefresh} />
+          </Card>
+        ))}
       </Spin>
     </>
   );
