@@ -1,0 +1,240 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "微信支付 / 支付宝官方支付接口（Sidecar）",
+    "description": "new-api 原生微信支付（Native 扫码）与支付宝（电脑网站支付）充值接口文档。",
+    "version": "1.0.0"
+  },
+  "tags": [
+    { "name": "微信支付" },
+    { "name": "支付宝" }
+  ],
+  "paths": {
+    "/api/user/wechatpay/pay": {
+      "post": {
+        "summary": "创建微信支付订单（Native 扫码）",
+        "description": "🔐 需要用户鉴权（UserAuth）；受 CriticalRateLimit 限制。创建订单后返回微信支付二维码链接（code_url），前端需自行渲染二维码供用户扫码支付。",
+        "tags": ["微信支付"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["amount"],
+                "properties": {
+                  "amount": {
+                    "type": "integer",
+                    "description": "充值数量。USD/CNY 模式下为金额；TOKENS 模式下为 token 数量，后端会自动换算为对应金额。"
+                  }
+                },
+                "example": { "amount": 100 }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "订单创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "code_url":  { "type": "string", "description": "微信支付二维码链接（weixin:// 协议），需前端渲染为二维码" },
+                        "trade_no":  { "type": "string", "description": "本地订单号，格式：WXP-{userId}-{timestamp}-{random}" },
+                        "amount":    { "type": "number", "description": "实际支付金额（人民币，元）" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "200-error": {
+            "description": "业务错误（HTTP 仍为 200，message 为 error）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "error" },
+                    "data":    { "type": "string", "description": "错误提示文案" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wechatpay/notify": {
+      "post": {
+        "summary": "微信支付异步回调通知",
+        "description": "🔓 无需鉴权；由微信支付服务器主动推送。收到回调后校验签名并完成充值。",
+        "tags": ["微信支付"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "object",
+                "xml": { "name": "xml" },
+                "properties": {
+                  "return_code":  { "type": "string", "description": "通信标识：SUCCESS / FAIL" },
+                  "return_msg":   { "type": "string", "description": "通信错误信息" },
+                  "result_code":  { "type": "string", "description": "业务结果：SUCCESS / FAIL" },
+                  "out_trade_no": { "type": "string", "description": "商户订单号（本地 trade_no）" },
+                  "transaction_id": { "type": "string", "description": "微信支付订单号" },
+                  "total_fee":    { "type": "integer", "description": "订单金额（分）" },
+                  "time_end":     { "type": "string", "description": "支付完成时间，格式 yyyyMMddHHmmss" },
+                  "sign":         { "type": "string", "description": "微信支付签名" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "回调响应（必须返回 XML，否则微信会重试）",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "string",
+                  "example": "<xml><return_code><![CDATA[SUCCESS]]></return_code><return_msg><![CDATA[OK]]></return_msg></xml>"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/alipay/pay": {
+      "post": {
+        "summary": "创建支付宝支付订单（电脑网站支付）",
+        "description": "🔐 需要用户鉴权（UserAuth）；受 CriticalRateLimit 限制。创建订单后返回支付宝跳转链接，前端直接打开即可进入支付宝收银台。",
+        "tags": ["支付宝"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["amount"],
+                "properties": {
+                  "amount": {
+                    "type": "integer",
+                    "description": "充值数量。USD/CNY 模式下为金额；TOKENS 模式下为 token 数量，后端会自动换算为对应金额。"
+                  }
+                },
+                "example": { "amount": 100 }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "订单创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "pay_url":  { "type": "string", "description": "支付宝电脑网站支付跳转链接，前端直接 window.open 即可" },
+                        "trade_no": { "type": "string", "description": "本地订单号，格式：ALI-{userId}-{timestamp}-{random}" },
+                        "amount":   { "type": "number", "description": "实际支付金额（人民币，元）" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "200-error": {
+            "description": "业务错误（HTTP 仍为 200，message 为 error）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "error" },
+                    "data":    { "type": "string", "description": "错误提示文案" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/alipay/notify": {
+      "post": {
+        "summary": "支付宝异步回调通知",
+        "description": "🔓 无需鉴权；由支付宝服务器主动推送（POST 表单）。收到回调后校验签名并完成充值。",
+        "tags": ["支付宝"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "out_trade_no": { "type": "string", "description": "商户订单号（本地 trade_no）" },
+                  "trade_no":     { "type": "string", "description": "支付宝交易号" },
+                  "trade_status": { "type": "string", "description": "交易状态：TRADE_SUCCESS / TRADE_FINISHED / WAIT_BUYER_PAY 等" },
+                  "total_amount": { "type": "string", "description": "订单金额（元）" },
+                  "sign":         { "type": "string", "description": "支付宝签名" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "回调响应（必须返回纯文本 success / fail，否则支付宝会重试）",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "enum": ["success", "fail"],
+                  "example": "success"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/alipay/return": {
+      "get": {
+        "summary": "支付宝同步返回",
+        "description": "🔓 无需鉴权；用户支付完成后支付宝会重定向到此地址。后端直接 302 跳转到充值历史页面。",
+        "tags": ["支付宝"],
+        "responses": {
+          "302": {
+            "description": "重定向到 /console/topup?show_history=true"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
