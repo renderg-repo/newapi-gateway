@@ -19,6 +19,7 @@ import (
 	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/oauth"
+	sidecarModel "github.com/QuantumNous/new-api/sidecar/model"
 	perfmetrics "github.com/QuantumNous/new-api/pkg/perf_metrics"
 	"github.com/QuantumNous/new-api/relay"
 	"github.com/QuantumNous/new-api/router"
@@ -281,6 +282,13 @@ func InitResources() error {
 	err = model.InitDB()
 	if err != nil {
 		common.FatalLog("failed to initialize database: " + err.Error())
+		return err
+	}
+
+	// Initialize sidecar model catalog tables
+	sidecarModel.SetDB(model.DB)
+	if err := sidecarModel.Migrate(); err != nil {
+		common.FatalLog("failed to migrate sidecar model catalog: " + err.Error())
 		return err
 	}
 
