@@ -118,6 +118,8 @@ func GetStatus(c *gin.Context) {
 		"privacy_policy_enabled":      legalSetting.PrivacyPolicy != "",
 		"checkin_enabled":             operation_setting.GetCheckinSetting().Enabled,
 		"sms_enabled":                 common.SMSEnabled,
+		"wechatpay_enabled":           setting.WechatPayEnabled,
+		"alipay_enabled":              setting.AlipayEnabled,
 	}
 
 	// 根据启用状态注入可选内容

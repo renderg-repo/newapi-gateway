@@ -15,6 +15,7 @@ import (
 	"github.com/QuantumNous/new-api/setting"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/QuantumNous/new-api/setting/system_setting"
+	sidecarService "github.com/QuantumNous/new-api/sidecar/service"
 
 	"github.com/Calcium-Ion/go-epay/epay"
 	"github.com/gin-gonic/gin"
@@ -90,12 +91,17 @@ func GetTopUpInfo(c *gin.Context) {
 		}
 	}
 
+	var enableWechatPay, enableAlipay bool
+	payMethods, enableWechatPay, enableAlipay = sidecarService.AppendNativePayMethods(payMethods)
+
 	data := gin.H{
 		"enable_online_topup":        isEpayTopUpEnabled(),
 		"enable_stripe_topup":        isStripeTopUpEnabled(),
 		"enable_creem_topup":         isCreemTopUpEnabled(),
 		"enable_waffo_topup":         enableWaffo,
 		"enable_waffo_pancake_topup": enableWaffoPancake,
+		"enable_wechatpay_topup":     enableWechatPay,
+		"enable_alipay_topup":        enableAlipay,
 		"waffo_pay_methods": func() interface{} {
 			if enableWaffo {
 				return setting.GetWaffoPayMethods()
@@ -103,6 +109,8 @@ func GetTopUpInfo(c *gin.Context) {
 			return nil
 		}(),
 		"creem_products":          setting.CreemProducts,
+		"wechatpay_min_topup":     setting.WechatPayMinTopUp,
+		"alipay_min_topup":        setting.AlipayMinTopUp,
 		"pay_methods":             payMethods,
 		"min_topup":               operation_setting.MinTopUp,
 		"stripe_min_topup":        setting.StripeMinTopUp,

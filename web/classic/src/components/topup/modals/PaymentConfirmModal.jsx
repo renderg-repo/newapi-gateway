@@ -122,13 +122,13 @@ const PaymentConfirmModal = ({
                   if (payMethod) {
                     return (
                       <>
-                        {payMethod.type === 'alipay' ? (
+                        {payMethod.type === 'alipay' || payMethod.type === 'alipay_page' ? (
                           <SiAlipay
                             className='mr-2'
                             size={16}
                             color='#1677FF'
                           />
-                        ) : payMethod.type === 'wxpay' ? (
+                        ) : payMethod.type === 'wxpay' || payMethod.type === 'wechatpay_native' ? (
                           <SiWechat
                             className='mr-2'
                             size={16}
@@ -167,7 +167,7 @@ const PaymentConfirmModal = ({
                     );
                   } else {
                     // 默认充值方式
-                    if (payWay === 'alipay') {
+                    if (payWay === 'alipay' || payWay === 'alipay_page') {
                       return (
                         <>
                           <SiAlipay

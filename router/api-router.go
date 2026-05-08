@@ -390,5 +390,8 @@ func SetApiRouter(router *gin.Engine) {
 
 		// Sidecar: phone authentication routes
 		sidecarRouter.RegisterPhoneAuthRoutes(apiRouter)
+
+		// Sidecar: native payment routes (WeChat Pay / Alipay)
+		sidecarRouter.RegisterNativePaymentRoutes(apiRouter)
 	}
 }
