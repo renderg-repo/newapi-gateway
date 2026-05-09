@@ -334,7 +334,9 @@
           "icon": { "type": "string", "example": "" },
           "release_date": { "type": "string", "example": "2024-08-15" },
           "knowledge_cutoff": { "type": "string", "example": "2024-08" },
-          "parameter_count": { "type": "string", "example": "" }
+          "parameter_count": { "type": "string", "example": "" },
+          "input_price": { "type": "number", "example": 2.5, "description": "每百万 token 输入价格（USD）" },
+          "output_price": { "type": "number", "example": 10, "description": "每百万 token 输出价格（USD）" }
         }
       },
       "ModelSpec": {

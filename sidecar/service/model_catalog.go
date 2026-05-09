@@ -1,11 +1,13 @@
 package service
 
 import (
+	"math"
 	"strings"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
 	sidecarModel "github.com/QuantumNous/new-api/sidecar/model"
+	"github.com/QuantumNous/new-api/setting/ratio_setting"
 )
 
 type CatalogModel struct {
@@ -34,6 +36,8 @@ type CatalogModel struct {
 	ReleaseDate            string   `json:"release_date,omitempty"`
 	KnowledgeCutoff        string   `json:"knowledge_cutoff,omitempty"`
 	ParameterCount         string   `json:"parameter_count,omitempty"`
+	InputPrice             float64  `json:"input_price"`
+	OutputPrice            float64  `json:"output_price"`
 }
 
 func parseCapabilities(capStr string) []string {
@@ -62,7 +66,28 @@ func overlaySpec(cm *CatalogModel, spec *sidecarModel.ModelSpec) {
 	cm.ParameterCount = spec.ParameterCount
 }
 
+func minGroupRatio(enableGroups []string) float64 {
+	if len(enableGroups) == 0 {
+		return 1
+	}
+	groupRatios := ratio_setting.GetGroupRatioCopy()
+	minRatio := math.MaxFloat64
+	for _, g := range enableGroups {
+		if r, ok := groupRatios[g]; ok && r < minRatio {
+			minRatio = r
+		}
+	}
+	if minRatio == math.MaxFloat64 {
+		return 1
+	}
+	return minRatio
+}
+
 func buildCatalogModel(p model.Pricing, vendorMap map[int]model.PricingVendor) CatalogModel {
+	ratio := minGroupRatio(p.EnableGroup)
+	inputPrice := p.ModelRatio * 2 * ratio
+	outputPrice := inputPrice * p.CompletionRatio
+
 	cm := CatalogModel{
 		ModelName:            p.ModelName,
 		Description:          p.Description,
@@ -80,6 +105,8 @@ func buildCatalogModel(p model.Pricing, vendorMap map[int]model.PricingVendor) C
 		BillingMode:          p.BillingMode,
 		BillingExpr:          p.BillingExpr,
 		Icon:                 p.Icon,
+		InputPrice:           inputPrice,
+		OutputPrice:          outputPrice,
 	}
 	if v, ok := vendorMap[p.VendorID]; ok {
 		cm.VendorName = v.Name
