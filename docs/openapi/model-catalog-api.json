@@ -1,0 +1,403 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "模型目录接口（Model Catalog）",
+    "description": "new-api 模型目录 Sidecar 接口文档。聚合定价数据与模型规格元数据，为前端模型列表/卡片页面提供统一查询能力。",
+    "version": "1.0.0"
+  },
+  "tags": [
+    { "name": "模型目录（公开）", "description": "无需认证，面向普通用户展示模型聚合信息" },
+    { "name": "模型规格管理", "description": "需管理员权限，维护模型规格元数据" }
+  ],
+  "paths": {
+    "/api/model-catalog": {
+      "get": {
+        "summary": "获取全部模型目录",
+        "description": "返回全部模型的聚合数据（定价 + 规格），按 pricing 缓存中的模型列表展开。支持按提供商和能力标签过滤。",
+        "tags": ["模型目录（公开）"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "vendor",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "按提供商名称精确过滤",
+            "example": "OpenAI"
+          },
+          {
+            "name": "capabilities",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "按能力标签过滤，多个能力用逗号分隔（AND 关系，模型需同时满足所有指定能力）",
+            "example": "chat,vision,function"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/CatalogModel" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/model-catalog/{model_name}": {
+      "get": {
+        "summary": "获取单个模型聚合数据",
+        "description": "按模型名称查询聚合数据。若模型不在 pricing 缓存中，返回 not_found。",
+        "tags": ["模型目录（公开）"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "model_name",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "模型名称（需 URL 编码）",
+            "example": "gpt-4o"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "$ref": "#/components/schemas/CatalogModel" }
+                  }
+                }
+              }
+            }
+          },
+          "200-error": {
+            "description": "模型不存在（HTTP 仍为 200，success 为 false）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": false },
+                    "message": { "type": "string", "example": "common.not_found" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/model-catalog/admin/specs": {
+      "get": {
+        "summary": "分页查询模型规格列表",
+        "description": "支持按 model_name 模糊搜索。",
+        "tags": ["模型规格管理"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "按 model_name 模糊搜索关键词"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 1 },
+            "description": "页码"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 20 },
+            "description": "每页条数"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/ModelSpec" }
+                        },
+                        "total": { "type": "integer", "example": 100 },
+                        "page": { "type": "integer", "example": 1 },
+                        "page_size": { "type": "integer", "example": 20 }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "创建模型规格",
+        "description": "新建一条模型规格记录，model_name 全局唯一。",
+        "tags": ["模型规格管理"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ModelSpecCreate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "$ref": "#/components/schemas/ModelSpec" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "更新模型规格",
+        "description": "更新已有规格记录，必须携带 id。",
+        "tags": ["模型规格管理"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ModelSpecUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "$ref": "#/components/schemas/ModelSpec" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/model-catalog/admin/specs/{id}": {
+      "get": {
+        "summary": "获取单条模型规格",
+        "description": "按 ID 查询 ModelSpec 详情。",
+        "tags": ["模型规格管理"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "规格记录 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "$ref": "#/components/schemas/ModelSpec" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "删除模型规格",
+        "description": "软删除模型规格记录。",
+        "tags": ["模型规格管理"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "规格记录 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "type": "object", "nullable": true }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CatalogModel": {
+        "type": "object",
+        "description": "公开接口返回的聚合模型对象，融合 pricing 与 model_spec 数据",
+        "properties": {
+          "model_name": { "type": "string", "example": "gpt-4o" },
+          "description": { "type": "string", "example": "OpenAI 最新旗舰模型，多模态能力强大" },
+          "vendor_id": { "type": "integer", "example": 1 },
+          "vendor_name": { "type": "string", "example": "OpenAI" },
+          "vendor_icon": { "type": "string", "example": "openai" },
+          "context_length": { "type": "integer", "example": 128000 },
+          "max_output_tokens": { "type": "integer", "example": 4096 },
+          "capabilities": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["chat", "function", "vision", "streaming"]
+          },
+          "model_ratio": { "type": "number", "example": 5.0 },
+          "completion_ratio": { "type": "number", "example": 15.0 },
+          "model_price": { "type": "number", "example": 0 },
+          "cache_ratio": { "type": "number", "nullable": true, "example": null },
+          "create_cache_ratio": { "type": "number", "nullable": true, "example": null },
+          "image_ratio": { "type": "number", "nullable": true, "example": null },
+          "audio_ratio": { "type": "number", "nullable": true, "example": null },
+          "audio_completion_ratio": { "type": "number", "nullable": true, "example": null },
+          "enable_groups": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["default", "vip"]
+          },
+          "tags": { "type": "string", "example": "multimodal,vision" },
+          "supported_endpoint_types": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["openai"]
+          },
+          "billing_mode": { "type": "string", "example": "" },
+          "billing_expr": { "type": "string", "example": "" },
+          "icon": { "type": "string", "example": "" },
+          "release_date": { "type": "string", "example": "2024-08-15" },
+          "knowledge_cutoff": { "type": "string", "example": "2024-08" },
+          "parameter_count": { "type": "string", "example": "" }
+        }
+      },
+      "ModelSpec": {
+        "type": "object",
+        "description": "sidecar 私有模型规格记录",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "model_name": { "type": "string", "example": "gpt-4o" },
+          "context_length": { "type": "integer", "example": 128000 },
+          "max_output_tokens": { "type": "integer", "example": 4096 },
+          "capabilities": { "type": "string", "example": "[\"chat\",\"function\",\"vision\"]", "description": "JSON 数组字符串" },
+          "description": { "type": "string", "example": "OpenAI 最新旗舰模型" },
+          "icon": { "type": "string", "example": "openai" },
+          "release_date": { "type": "string", "example": "2024-08-15" },
+          "knowledge_cutoff": { "type": "string", "example": "2024-08" },
+          "parameter_count": { "type": "string", "example": "" },
+          "status": { "type": "integer", "example": 1, "description": "0=禁用，1=启用" },
+          "created_time": { "type": "integer", "example": 1710000000 },
+          "updated_time": { "type": "integer", "example": 1710000000 }
+        }
+      },
+      "ModelSpecCreate": {
+        "type": "object",
+        "required": ["model_name"],
+        "properties": {
+          "model_name": { "type": "string", "example": "gpt-4o" },
+          "context_length": { "type": "integer", "example": 128000 },
+          "max_output_tokens": { "type": "integer", "example": 4096 },
+          "capabilities": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["chat", "function", "vision"]
+          },
+          "description": { "type": "string", "example": "OpenAI 最新旗舰模型" },
+          "icon": { "type": "string", "example": "openai" },
+          "release_date": { "type": "string", "example": "2024-08-15" },
+          "knowledge_cutoff": { "type": "string", "example": "2024-08" },
+          "parameter_count": { "type": "string", "example": "" },
+          "status": { "type": "integer", "example": 1 }
+        }
+      },
+      "ModelSpecUpdate": {
+        "type": "object",
+        "required": ["id", "model_name"],
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "model_name": { "type": "string", "example": "gpt-4o" },
+          "context_length": { "type": "integer", "example": 128000 },
+          "max_output_tokens": { "type": "integer", "example": 4096 },
+          "capabilities": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["chat", "function", "vision"]
+          },
+          "description": { "type": "string", "example": "OpenAI 最新旗舰模型" },
+          "icon": { "type": "string", "example": "openai" },
+          "release_date": { "type": "string", "example": "2024-08-15" },
+          "knowledge_cutoff": { "type": "string", "example": "2024-08" },
+          "parameter_count": { "type": "string", "example": "" },
+          "status": { "type": "integer", "example": 1 }
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "在请求头中传入 `Authorization: Bearer {access_token}` 或 `Authorization: {session_cookie}`"
+      }
+    }
+  }
+}

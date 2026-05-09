@@ -1,6 +1,8 @@
 package service
 
 import (
+	"strings"
+
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
 	sidecarModel "github.com/QuantumNous/new-api/sidecar/model"
@@ -89,7 +91,7 @@ func buildCatalogModel(p model.Pricing, vendorMap map[int]model.PricingVendor) C
 	return cm
 }
 
-func GetModelCatalog() ([]CatalogModel, error) {
+func GetModelCatalog(vendorFilter string, capabilitiesFilter string) ([]CatalogModel, error) {
 	pricing := model.GetPricing()
 	vendors := model.GetVendors()
 	vendorMap := make(map[int]model.PricingVendor)
@@ -107,12 +109,45 @@ func GetModelCatalog() ([]CatalogModel, error) {
 		specMap[s.ModelName] = s
 	}
 
+	// 解析能力过滤条件
+	var capFilters []string
+	if capabilitiesFilter != "" {
+		capFilters = strings.Split(capabilitiesFilter, ",")
+		for i := range capFilters {
+			capFilters[i] = strings.TrimSpace(capFilters[i])
+		}
+	}
+
 	result := make([]CatalogModel, 0, len(pricing))
 	for _, p := range pricing {
 		cm := buildCatalogModel(p, vendorMap)
 		if spec, ok := specMap[p.ModelName]; ok {
 			overlaySpec(&cm, spec)
 		}
+
+		// 按提供商过滤
+		if vendorFilter != "" && cm.VendorName != vendorFilter {
+			continue
+		}
+
+		// 按能力过滤（要求模型具备所有指定的能力）
+		if len(capFilters) > 0 {
+			capSet := make(map[string]struct{}, len(cm.Capabilities))
+			for _, c := range cm.Capabilities {
+				capSet[c] = struct{}{}
+			}
+			match := true
+			for _, cf := range capFilters {
+				if _, ok := capSet[cf]; !ok {
+					match = false
+					break
+				}
+			}
+			if !match {
+				continue
+			}
+		}
+
 		result = append(result, cm)
 	}
 	return result, nil

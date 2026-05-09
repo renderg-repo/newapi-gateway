@@ -13,7 +13,9 @@ import (
 // --- Public API ---
 
 func GetModelCatalog(c *gin.Context) {
-	models, err := service.GetModelCatalog()
+	vendor := c.Query("vendor")
+	capabilities := c.Query("capabilities")
+	models, err := service.GetModelCatalog(vendor, capabilities)
 	if err != nil {
 		common.ApiErrorI18n(c, i18n.MsgDatabaseError)
 		return
