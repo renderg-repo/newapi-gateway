@@ -10,6 +10,7 @@ func RegisterModelCatalogRoutes(apiRouter *gin.RouterGroup) {
 	// Public catalog endpoints (no auth required)
 	catalogRoute := apiRouter.Group("/model-catalog")
 	{
+		catalogRoute.GET("", controller.GetModelCatalog)
 		catalogRoute.GET("/", controller.GetModelCatalog)
 		catalogRoute.GET("/:model_name", controller.GetModelCatalogByName)
 	}
@@ -18,9 +19,12 @@ func RegisterModelCatalogRoutes(apiRouter *gin.RouterGroup) {
 	adminRoute := apiRouter.Group("/model-catalog/admin/specs")
 	adminRoute.Use(middleware.AdminAuth())
 	{
+		adminRoute.GET("", controller.AdminListModelSpecs)
 		adminRoute.GET("/", controller.AdminListModelSpecs)
 		adminRoute.GET("/:id", controller.AdminGetModelSpec)
+		adminRoute.POST("", controller.AdminCreateModelSpec)
 		adminRoute.POST("/", controller.AdminCreateModelSpec)
+		adminRoute.PUT("", controller.AdminUpdateModelSpec)
 		adminRoute.PUT("/", controller.AdminUpdateModelSpec)
 		adminRoute.DELETE("/:id", controller.AdminDeleteModelSpec)
 	}
