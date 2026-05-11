@@ -2,10 +2,12 @@ package service
 
 import (
 	"math"
+	"sort"
 	"strings"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
+	perfmetrics "github.com/QuantumNous/new-api/pkg/perf_metrics"
 	sidecarModel "github.com/QuantumNous/new-api/sidecar/model"
 	"github.com/QuantumNous/new-api/setting/ratio_setting"
 )
@@ -38,6 +40,12 @@ type CatalogModel struct {
 	ParameterCount         string   `json:"parameter_count,omitempty"`
 	InputPrice             float64  `json:"input_price"`
 	OutputPrice            float64  `json:"output_price"`
+	// Runtime metrics
+	Status                 string   `json:"status"`
+	AvgLatencyMs           int64    `json:"avg_latency_ms"`
+	SuccessRate            float64  `json:"success_rate"`
+	IsHot                  bool     `json:"is_hot"`
+	RequestCount           int64    `json:"request_count"`
 }
 
 func parseCapabilities(capStr string) []string {
@@ -118,6 +126,84 @@ func buildCatalogModel(p model.Pricing, vendorMap map[int]model.PricingVendor) C
 	return cm
 }
 
+func statusFromSuccessRate(rate float64, requestCount int64) string {
+	if requestCount == 0 {
+		return "unknown"
+	}
+	if rate >= 95 {
+		return "running"
+	}
+	if rate >= 80 {
+		return "degraded"
+	}
+	return "down"
+}
+
+func injectRuntimeMetrics(models []CatalogModel) {
+	summary, err := perfmetrics.QuerySummaryAll(24)
+	if err != nil {
+		common.SysLog("failed to query perf metrics summary: " + err.Error())
+		for i := range models {
+			models[i].Status = "unknown"
+		}
+		return
+	}
+
+	metricMap := make(map[string]perfmetrics.ModelSummary, len(summary.Models))
+	for _, m := range summary.Models {
+		metricMap[m.ModelName] = m
+	}
+
+	type candidate struct {
+		idx   int
+		count int64
+	}
+	var candidates []candidate
+	for i := range models {
+		if m, ok := metricMap[models[i].ModelName]; ok {
+			models[i].AvgLatencyMs = m.AvgLatencyMs
+			models[i].SuccessRate = m.SuccessRate
+			models[i].RequestCount = m.RequestCount
+			models[i].Status = statusFromSuccessRate(m.SuccessRate, m.RequestCount)
+			if m.RequestCount > 0 {
+				candidates = append(candidates, candidate{i, m.RequestCount})
+			}
+		} else {
+			models[i].Status = "unknown"
+		}
+	}
+
+	sort.Slice(candidates, func(i, j int) bool {
+		return candidates[i].count > candidates[j].count
+	})
+	hotLimit := 10
+	if len(candidates) < hotLimit {
+		hotLimit = len(candidates)
+	}
+	for i := 0; i < hotLimit; i++ {
+		models[candidates[i].idx].IsHot = true
+	}
+}
+
+func injectRuntimeMetricSingle(cm *CatalogModel) {
+	summary, err := perfmetrics.QuerySummaryAll(24)
+	if err != nil {
+		common.SysLog("failed to query perf metrics summary: " + err.Error())
+		cm.Status = "unknown"
+		return
+	}
+	for _, m := range summary.Models {
+		if m.ModelName == cm.ModelName {
+			cm.AvgLatencyMs = m.AvgLatencyMs
+			cm.SuccessRate = m.SuccessRate
+			cm.RequestCount = m.RequestCount
+			cm.Status = statusFromSuccessRate(m.SuccessRate, m.RequestCount)
+			return
+		}
+	}
+	cm.Status = "unknown"
+}
+
 func GetModelCatalog(vendorFilter string, capabilitiesFilter string) ([]CatalogModel, error) {
 	pricing := model.GetPricing()
 	vendors := model.GetVendors()
@@ -177,6 +263,7 @@ func GetModelCatalog(vendorFilter string, capabilitiesFilter string) ([]CatalogM
 
 		result = append(result, cm)
 	}
+	injectRuntimeMetrics(result)
 	return result, nil
 }
 
@@ -204,5 +291,6 @@ func GetModelCatalogByName(modelName string) (*CatalogModel, error) {
 	if err == nil && spec != nil {
 		overlaySpec(&cm, spec)
 	}
+	injectRuntimeMetricSingle(&cm)
 	return &cm, nil
 }

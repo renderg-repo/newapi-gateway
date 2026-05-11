@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { SectionPageLayout } from '@/components/layout'
+import { ModelSpecs } from '@/features/model-specs'
 import { listDeployments } from './api'
 import { DeploymentAccessGuard } from './components/deployment-access-guard'
 import { DeploymentsTable } from './components/deployments-table'
@@ -21,6 +22,7 @@ import {
   MODELS_DEFAULT_SECTION,
   MODELS_SECTION_IDS,
 } from './section-registry'
+import type { ModelTabCategory } from './types'
 
 const route = getRouteApi('/_authenticated/models/$section')
 
@@ -35,6 +37,10 @@ const SECTION_META: Record<
   deployments: {
     titleKey: 'Deployments',
     descriptionKey: 'Manage model deployments',
+  },
+  specs: {
+    titleKey: 'Specs',
+    descriptionKey: 'Manage model specifications for catalog display',
   },
 }
 
@@ -52,8 +58,8 @@ function ModelsContent() {
 
   // keep context state in sync (for components that rely on it)
   useEffect(() => {
-    if (tabCategory !== activeSection) {
-      setTabCategory(activeSection)
+    if (activeSection !== 'specs' && tabCategory !== activeSection) {
+      setTabCategory(activeSection as ModelTabCategory)
     }
   }, [activeSection, setTabCategory, tabCategory])
 
@@ -114,12 +120,12 @@ function ModelsContent() {
         <SectionPageLayout.Actions>
           {activeSection === 'metadata' ? (
             <ModelsPrimaryButtons />
-          ) : (
+          ) : activeSection === 'deployments' ? (
             <Button onClick={() => setCreateDeploymentOpen(true)} size='sm'>
               <Plus className='h-4 w-4' />
               {t('Create deployment')}
             </Button>
-          )}
+          ) : null}
         </SectionPageLayout.Actions>
         <SectionPageLayout.Content>
           <div className='space-y-4'>
@@ -132,9 +138,8 @@ function ModelsContent() {
                 ))}
               </TabsList>
             </Tabs>
-            {activeSection === 'metadata' ? (
-              <ModelsTable />
-            ) : (
+            {activeSection === 'metadata' && <ModelsTable />}
+            {activeSection === 'deployments' && (
               <DeploymentAccessGuard
                 loading={deploymentLoading}
                 loadingPhase={loadingPhase}
@@ -147,6 +152,7 @@ function ModelsContent() {
                 <DeploymentsTable />
               </DeploymentAccessGuard>
             )}
+            {activeSection === 'specs' && <ModelSpecs />}
           </div>
         </SectionPageLayout.Content>
       </SectionPageLayout>

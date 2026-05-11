@@ -10,6 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// --- Public API ---
+
 func GetModelCatalog(c *gin.Context) {
 	vendor := c.Query("vendor")
 	capabilities := c.Query("capabilities")
@@ -34,6 +36,8 @@ func GetModelCatalogByName(c *gin.Context) {
 	}
 	common.ApiSuccess(c, cm)
 }
+
+// --- Admin API ---
 
 type CreateModelSpecRequest struct {
 	ModelName       string   `json:"model_name" binding:"required"`
