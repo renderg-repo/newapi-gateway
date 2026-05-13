@@ -336,7 +336,12 @@
           "knowledge_cutoff": { "type": "string", "example": "2024-08" },
           "parameter_count": { "type": "string", "example": "" },
           "input_price": { "type": "number", "example": 2.5, "description": "每百万 token 输入价格（USD）" },
-          "output_price": { "type": "number", "example": 10, "description": "每百万 token 输出价格（USD）" }
+          "output_price": { "type": "number", "example": 10, "description": "每百万 token 输出价格（USD）" },
+          "status": { "type": "string", "example": "running", "description": "模型运行状态：running / degraded / down / unknown" },
+          "avg_latency_ms": { "type": "integer", "example": 320, "description": "过去 24 小时平均延迟（毫秒）" },
+          "success_rate": { "type": "number", "example": 98.5, "description": "过去 24 小时成功率（%）" },
+          "is_hot": { "type": "boolean", "example": true, "description": "是否为热门模型（请求量 Top 10）" },
+          "request_count": { "type": "integer", "example": 15234, "description": "过去 24 小时请求次数" }
         }
       },
       "ModelSpec": {
