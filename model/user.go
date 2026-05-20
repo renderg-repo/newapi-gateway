@@ -1073,3 +1073,7 @@ func (user *User) FillUserByPhone() error {
 	}
 	return err
 }
+
+func IsUsernameTakenByOther(username string, excludeId int) bool {
+	return DB.Where("username = ? AND id != ?", username, excludeId).Find(&User{}).RowsAffected > 0
+}
