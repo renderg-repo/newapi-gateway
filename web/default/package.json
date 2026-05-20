@@ -15,6 +15,9 @@
     "i18n:sync": "node scripts/sync-i18n.mjs",
     "knip": "knip"
   },
+  "overrides": {
+    "@rspack/core": "2.0.3"
+  },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
     "@fontsource-variable/public-sans": "^5.2.7",
