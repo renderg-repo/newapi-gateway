@@ -114,6 +114,11 @@ var WeChatServerAddress = ""
 var WeChatServerToken = ""
 var WeChatAccountQRCodeImageURL = ""
 
+// WeChat direct API integration (no external server)
+var WeChatAppID = ""
+var WeChatAppSecret = ""
+var WeChatReceiveToken = ""
+
 var TurnstileSiteKey = ""
 var TurnstileSecretKey = ""
 

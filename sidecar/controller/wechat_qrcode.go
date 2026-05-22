@@ -1,12 +1,12 @@
 package controller
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
-	"time"
+	"strings"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/i18n"
@@ -19,63 +19,27 @@ import (
 
 // ---------- request / response DTOs ----------
 
-type createQRCodeResponse struct {
+type getQRCodeResponse struct {
 	Ticket    string `json:"ticket"`
 	QRCodeURL string `json:"qrcode_url"`
 	ExpiresIn int    `json:"expires_in"` // seconds
 }
 
-type pollQRCodeResponse struct {
-	Status     string `json:"status"`
-	UserID     int    `json:"user_id,omitempty"`
-	Username   string `json:"username,omitempty"`
-	Role       int    `json:"role,omitempty"`
-	Group      string `json:"group,omitempty"`
-	WeChatId   string `json:"wechat_id,omitempty"`
+type checkQRCodeRequest struct {
+	Ticket string `json:"ticket"`
 }
 
-type callbackRequest struct {
-	Ticket   string `json:"ticket"`
-	WeChatId string `json:"wechat_id"`
+type checkQRCodeResponse struct {
+	Status   string `json:"status"`
+	UserID   int    `json:"user_id,omitempty"`
+	Username string `json:"username,omitempty"`
+	Role     int    `json:"role,omitempty"`
+	Group    string `json:"group,omitempty"`
 }
 
 // ---------- helpers ----------
 
-func getWeChatIdByCode(code string) (string, error) {
-	if code == "" {
-		return "", errors.New("invalid code")
-	}
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/wechat/user?code=%s", common.WeChatServerAddress, code), nil)
-	if err != nil {
-		return "", err
-	}
-	req.Header.Set("Authorization", common.WeChatServerToken)
-	client := http.Client{Timeout: 5 * time.Second}
-	httpResponse, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer httpResponse.Body.Close()
-
-	var res struct {
-		Success bool   `json:"success"`
-		Message string `json:"message"`
-		Data    string `json:"data"`
-	}
-	if err = json.NewDecoder(httpResponse.Body).Decode(&res); err != nil {
-		return "", err
-	}
-	if !res.Success {
-		return "", errors.New(res.Message)
-	}
-	if res.Data == "" {
-		return "", errors.New("verification code expired or invalid")
-	}
-	return res.Data, nil
-}
-
-// wechatSetupLogin copies the same logic from the main controller/wechat.go
-// (the original is unexported, so we replicate it here per sidecar convention)
+// wechatSetupLogin sets up the session cookie after successful login.
 func wechatSetupLogin(user *model.User, c *gin.Context) {
 	session := sessions.Default(c)
 	session.Set("id", user.Id)
@@ -104,154 +68,129 @@ func wechatSetupLogin(user *model.User, c *gin.Context) {
 
 // ---------- handlers ----------
 
-// CreateQRCodeLogin initiates a new QR-code login session.
-// POST /api/wechat/qrcode/create
-func CreateQRCodeLogin(c *gin.Context) {
-	if !common.WeChatAuthEnabled {
+// GetQRCode initiates a new QR-code login session.
+// GET /api/weixin/getQrCode?type=1
+func GetQRCode(c *gin.Context) {
+	if common.WeChatAppID == "" || common.WeChatAppSecret == "" {
 		common.ApiErrorI18n(c, i18n.MsgFeatureDisabled)
 		return
 	}
 
-	// Try to obtain a dynamic QR code URL from the external WeChat server.
-	qrCodeURL := common.WeChatAccountQRCodeImageURL
-	session := service.CreateQRCodeSession()
+	// Generate scene_id and create session.
+	sceneID := service.GenerateSceneID()
+	session := service.CreateQRCodeSession(sceneID)
 
-	// Attempt to generate a scene-based QR code via the external server.
-	if common.WeChatServerAddress != "" {
-		sceneReqURL := fmt.Sprintf("%s/api/wechat/qrcode/create?scene_id=%s", common.WeChatServerAddress, session.Ticket)
-		req, err := http.NewRequest("POST", sceneReqURL, nil)
-		if err == nil {
-			req.Header.Set("Authorization", common.WeChatServerToken)
-			client := http.Client{Timeout: 5 * time.Second}
-			if resp, err := client.Do(req); err == nil {
-				defer resp.Body.Close()
-				var qrResp struct {
-					Success   bool   `json:"success"`
-					QRCodeURL string `json:"qrcode_url"`
-				}
-				if json.NewDecoder(resp.Body).Decode(&qrResp) == nil && qrResp.Success && qrResp.QRCodeURL != "" {
-					qrCodeURL = qrResp.QRCodeURL
-				}
-			}
-		}
+	// Create temporary QR code via WeChat API.
+	_, qrcodeURL, err := service.CreateTempQRCode(sceneID)
+	if err != nil {
+		common.SysLog(fmt.Sprintf("Failed to create WeChat QR code: %v", err))
+		common.ApiErrorI18n(c, i18n.MsgOperationFailed)
+		return
 	}
 
-	expiresIn := int(time.Until(session.ExpiresAt).Seconds())
-	common.ApiSuccess(c, createQRCodeResponse{
+	expiresIn := 600 // QR code expires in 600 seconds per WeChat API
+	common.ApiSuccess(c, getQRCodeResponse{
 		Ticket:    session.Ticket,
-		QRCodeURL: qrCodeURL,
+		QRCodeURL: qrcodeURL,
 		ExpiresIn: expiresIn,
 	})
 }
 
-// PollQRCodeLogin polls the status of a QR-code login session.
-// GET /api/wechat/qrcode/poll?ticket=xxx
-func PollQRCodeLogin(c *gin.Context) {
-	if !common.WeChatAuthEnabled {
-		common.ApiErrorI18n(c, i18n.MsgFeatureDisabled)
+// ReceiveMessage handles WeChat callback for QR code scan events.
+// GET/POST /api/weixin/receiveMessage
+// GET: signature verification (returns echostr)
+// POST: receives scan event XML, updates session status
+func ReceiveMessage(c *gin.Context) {
+	if common.WeChatAppID == "" || common.WeChatAppSecret == "" || common.WeChatReceiveToken == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": "WeChat login not configured",
+		})
 		return
 	}
 
-	ticket := c.Query("ticket")
-	if ticket == "" {
-		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
+	signature := c.Query("signature")
+	timestamp := c.Query("timestamp")
+	nonce := c.Query("nonce")
+
+	// Verify signature.
+	if !service.VerifySignature(signature, timestamp, nonce) {
+		common.SysLog(fmt.Sprintf("WeChat callback signature verification failed: sig=%s, ts=%s, nonce=%s", signature, timestamp, nonce))
+		c.String(http.StatusForbidden, "signature verification failed")
 		return
 	}
 
-	session, ok := service.GetQRCodeSession(ticket)
+	// GET request: echo back echostr for verification.
+	if c.Request.Method == http.MethodGet {
+		echostr := c.Query("echostr")
+		c.String(http.StatusOK, echostr)
+		return
+	}
+
+	// POST request: parse XML message.
+	body, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		common.SysLog(fmt.Sprintf("Failed to read WeChat callback body: %v", err))
+		c.String(http.StatusInternalServerError, "internal error")
+		return
+	}
+
+	msg, err := service.ParseWeChatMessage(body)
+	if err != nil {
+		common.SysLog(fmt.Sprintf("Failed to parse WeChat message: %v", err))
+		c.String(http.StatusOK, "success") // still return success to WeChat
+		return
+	}
+
+	// Only handle SCAN or subscribe (SCAN) events.
+	event := msg.Event
+	if event != "SCAN" && event != "subscribe" {
+		c.String(http.StatusOK, "success")
+		return
+	}
+
+	// Extract scene_id from EventKey.
+	// For SCAN event: EventKey is the scene_id directly.
+	// For subscribe event with QR code: EventKey is "qrscene_<scene_id>".
+	sceneIDStr := msg.EventKey
+	if strings.HasPrefix(sceneIDStr, "qrscene_") {
+		sceneIDStr = strings.TrimPrefix(sceneIDStr, "qrscene_")
+	}
+	sceneID, err := strconv.Atoi(sceneIDStr)
+	if err != nil {
+		common.SysLog(fmt.Sprintf("Invalid scene_id in WeChat event: %s", msg.EventKey))
+		c.String(http.StatusOK, "success")
+		return
+	}
+
+	openID := msg.FromUserName
+
+	// Look up session by scene_id.
+	session, ok := service.GetQRCodeSessionBySceneID(sceneID)
 	if !ok {
-		common.ApiErrorI18n(c, i18n.MsgNotFound)
+		common.SysLog(fmt.Sprintf("QR code session not found for scene_id: %d", sceneID))
+		c.String(http.StatusOK, "success")
 		return
 	}
 
-	resp := pollQRCodeResponse{
-		Status: string(session.Status),
-	}
-
-	// When the session is confirmed, set up the login session cookie.
-	if session.Status == service.QRCodeStatusConfirmed && session.UserID > 0 {
-		user := model.User{Id: session.UserID}
-		if err := user.FillUserById(); err == nil {
-			resp.UserID = user.Id
-			resp.Username = user.Username
-			resp.Role = user.Role
-			resp.Group = user.Group
-			resp.WeChatId = user.WeChatId
-
-			// Set session cookie so the frontend is logged in.
-			sess := sessions.Default(c)
-			sess.Set("id", user.Id)
-			sess.Set("username", user.Username)
-			sess.Set("role", user.Role)
-			sess.Set("status", user.Status)
-			sess.Set("group", user.Group)
-			_ = sess.Save()
-		}
-	}
-
-	common.ApiSuccess(c, resp)
-}
-
-// HandleQRCodeCallback receives scan events from the external WeChat bridge server.
-// POST /api/wechat/qrcode/callback
-func HandleQRCodeCallback(c *gin.Context) {
-	if !common.WeChatAuthEnabled {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": "WeChat login is disabled",
-		})
-		return
-	}
-
-	var req callbackRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": "invalid request",
-		})
-		return
-	}
-
-	if req.Ticket == "" || req.WeChatId == "" {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": "ticket and wechat_id are required",
-		})
-		return
-	}
-
-	// Validate the ticket exists and is still pending.
-	session, ok := service.GetQRCodeSession(req.Ticket)
-	if !ok {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": "ticket not found or expired",
-		})
-		return
-	}
+	// Check session is still pending.
 	if session.Status != service.QRCodeStatusPending {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": fmt.Sprintf("ticket already %s", session.Status),
-		})
+		common.SysLog(fmt.Sprintf("QR code session already processed: ticket=%s, status=%s", session.Ticket, session.Status))
+		c.String(http.StatusOK, "success")
 		return
 	}
 
-	// Look up existing user or create a new one.
-	user := model.User{WeChatId: req.WeChatId}
-	if model.IsWeChatIdAlreadyTaken(req.WeChatId) {
+	// Look up or create user by openID (WeChatId).
+	user := model.User{WeChatId: openID}
+	if model.IsWeChatIdAlreadyTaken(openID) {
 		if err := user.FillUserByWeChatId(); err != nil {
-			c.JSON(http.StatusOK, gin.H{
-				"success": false,
-				"message": err.Error(),
-			})
+			common.SysLog(fmt.Sprintf("Failed to find user by WeChatId: %v", err))
+			c.String(http.StatusOK, "success")
 			return
 		}
 		if user.Id == 0 {
-			c.JSON(http.StatusOK, gin.H{
-				"success": false,
-				"message": "user has been deleted",
-			})
+			common.SysLog("User with WeChatId has been deleted")
+			c.String(http.StatusOK, "success")
 			return
 		}
 	} else if common.RegisterEnabled {
@@ -259,44 +198,89 @@ func HandleQRCodeCallback(c *gin.Context) {
 		user.DisplayName = "WeChat User"
 		user.Role = common.RoleCommonUser
 		user.Status = common.UserStatusEnabled
-
 		if err := user.Insert(0); err != nil {
-			c.JSON(http.StatusOK, gin.H{
-				"success": false,
-				"message": err.Error(),
-			})
+			common.SysLog(fmt.Sprintf("Failed to create user for WeChat login: %v", err))
+			c.String(http.StatusOK, "success")
 			return
 		}
 	} else {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": "registration is disabled",
-		})
+		// Registration disabled: mark session as needs_bind.
+		service.UpdateQRCodeSessionStatus(session.Ticket, service.QRCodeStatusScanned, openID, 0)
+		c.String(http.StatusOK, "success")
 		return
 	}
 
 	if user.Status != common.UserStatusEnabled {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": "user has been banned",
-		})
+		common.SysLog(fmt.Sprintf("User %d is banned", user.Id))
+		c.String(http.StatusOK, "success")
 		return
 	}
 
-	// Update the session with the user info.
-	service.UpdateQRCodeSessionStatus(req.Ticket, service.QRCodeStatusConfirmed, req.WeChatId, user.Id)
+	// Update session to confirmed.
+	service.UpdateQRCodeSessionStatus(session.Ticket, service.QRCodeStatusConfirmed, openID, user.Id)
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "",
-	})
+	// Return success to WeChat.
+	c.String(http.StatusOK, "success")
 }
 
-// HandleCodeBasedLogin is for the code-based WeChat login flow (used when
-// the external WeChat server provides a code instead of managing QR codes).
+// CheckQRCode polls the status of a QR-code login session.
+// POST /api/weixin/checkQrCode
+// Body: { ticket: "xxx" }
+func CheckQRCode(c *gin.Context) {
+	if common.WeChatAppID == "" || common.WeChatAppSecret == "" {
+		common.ApiErrorI18n(c, i18n.MsgFeatureDisabled)
+		return
+	}
+
+	var req checkQRCodeRequest
+	if err := c.ShouldBindJSON(&req); err != nil || req.Ticket == "" {
+		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
+		return
+	}
+
+	session, ok := service.GetQRCodeSessionByTicket(req.Ticket)
+	if !ok {
+		common.ApiErrorI18n(c, i18n.MsgNotFound)
+		return
+	}
+
+	resp := checkQRCodeResponse{
+		Status: string(session.Status),
+	}
+
+	// When confirmed, set up login session and return user info.
+	if session.Status == service.QRCodeStatusConfirmed && session.UserID > 0 {
+		user := model.User{Id: session.UserID}
+		if err := user.FillUserById(); err != nil {
+			common.ApiErrorI18n(c, i18n.MsgDatabaseError)
+			return
+		}
+		resp.UserID = user.Id
+		resp.Username = user.Username
+		resp.Role = user.Role
+		resp.Group = user.Group
+
+		// Set session cookie.
+		sess := sessions.Default(c)
+		sess.Set("id", user.Id)
+		sess.Set("username", user.Username)
+		sess.Set("role", user.Role)
+		sess.Set("status", user.Status)
+		sess.Set("group", user.Group)
+		if err := sess.Save(); err != nil {
+			common.ApiErrorI18n(c, i18n.MsgUserSessionSaveFailed)
+			return
+		}
+	}
+
+	common.ApiSuccess(c, resp)
+}
+
+// WeChatLoginByCode handles code-based WeChat login (legacy flow).
 // POST /api/wechat/qrcode/exchange
 // Body: { code: "xxx" }
-func HandleCodeBasedLogin(c *gin.Context) {
+// This is kept for backward compatibility with the existing code-based login.
+func WeChatLoginByCode(c *gin.Context) {
 	if !common.WeChatAuthEnabled {
 		common.ApiErrorI18n(c, i18n.MsgFeatureDisabled)
 		return
@@ -310,16 +294,51 @@ func HandleCodeBasedLogin(c *gin.Context) {
 		return
 	}
 
-	// Use the existing external server's /api/wechat/user endpoint to exchange the code.
-	wechatId, err := getWeChatIdByCode(req.Code)
+	// Exchange code for openID via WeChat OAuth API.
+	appID := common.WeChatAppID
+	appSecret := common.WeChatAppSecret
+	if appID == "" || appSecret == "" {
+		common.ApiErrorI18n(c, i18n.MsgFeatureDisabled)
+		return
+	}
+
+	url := fmt.Sprintf("https://api.weixin.qq.com/sns/oauth2/access_token?appid=%s&secret=%s&code=%s&grant_type=authorization_code", appID, appSecret, req.Code)
+	resp, err := http.Get(url)
+	if err != nil {
+		common.ApiErrorI18n(c, i18n.MsgOperationFailed)
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		common.ApiErrorI18n(c, i18n.MsgOperationFailed)
 		return
 	}
 
+	var result struct {
+		OpenID     string `json:"openid"`
+		Errcode    int    `json:"errcode"`
+		Errmsg     string `json:"errmsg"`
+	}
+	if err := common.UnmarshalJsonStr(string(body), &result); err != nil {
+		common.ApiErrorI18n(c, i18n.MsgOperationFailed)
+		return
+	}
+	if result.Errcode != 0 {
+		common.SysLog(fmt.Sprintf("WeChat OAuth error: %d %s", result.Errcode, result.Errmsg))
+		common.ApiErrorI18n(c, i18n.MsgOperationFailed)
+		return
+	}
+	if result.OpenID == "" {
+		common.ApiError(c, errors.New("empty openid"))
+		return
+	}
+
 	// Look up or create user.
-	user := model.User{WeChatId: wechatId}
-	if model.IsWeChatIdAlreadyTaken(wechatId) {
+	openID := result.OpenID
+	user := model.User{WeChatId: openID}
+	if model.IsWeChatIdAlreadyTaken(openID) {
 		if err := user.FillUserByWeChatId(); err != nil {
 			common.ApiErrorI18n(c, i18n.MsgDatabaseError)
 			return

@@ -7,12 +7,14 @@ import (
 )
 
 func RegisterWeChatQRCodeRoutes(apiRouter *gin.RouterGroup) {
-	// QR-code-based WeChat scan login endpoints
-	qrcodeRoute := apiRouter.Group("/wechat/qrcode")
+	// Direct WeChat Official Account API integration for QR scan login
+	weixinRoute := apiRouter.Group("/weixin")
 	{
-		qrcodeRoute.POST("/create", middleware.CriticalRateLimit(), controller.CreateQRCodeLogin)
-		qrcodeRoute.GET("/poll", middleware.CriticalRateLimit(), controller.PollQRCodeLogin)
-		qrcodeRoute.POST("/callback", middleware.CriticalRateLimit(), controller.HandleQRCodeCallback)
-		qrcodeRoute.POST("/exchange", middleware.CriticalRateLimit(), controller.HandleCodeBasedLogin)
+		weixinRoute.GET("/getQrCode", middleware.CriticalRateLimit(), controller.GetQRCode)
+		weixinRoute.Any("/receiveMessage", controller.ReceiveMessage)
+		weixinRoute.POST("/checkQrCode", middleware.CriticalRateLimit(), controller.CheckQRCode)
 	}
+
+	// Legacy code-based login (kept for backward compatibility)
+	apiRouter.POST("/wechat/qrcode/exchange", middleware.CriticalRateLimit(), controller.WeChatLoginByCode)
 }
