@@ -1,0 +1,356 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "手机号认证接口（Sidecar）",
+    "description": "new-api 手机号登录、注册、绑定相关接口",
+    "version": "1.0.0"
+  },
+  "tags": [
+    {
+      "name": "短信验证码"
+    },
+    {
+      "name": "用户登陆注册"
+    },
+    {
+      "name": "用户绑定"
+    }
+  ],
+  "paths": {
+    "/api/sms/send": {
+      "post": {
+        "summary": "发送短信验证码",
+        "deprecated": false,
+        "description": "🔓 无需鉴权；单手机号 60 秒冷却，验证码 10 分钟有效",
+        "tags": [
+          "短信验证码"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "phone",
+                  "type"
+                ],
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "description": "手机号"
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "验证码用途：login / register / rebind"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "Combination343": []
+          },
+          {
+            "Combination1243": []
+          }
+        ]
+      }
+    },
+    "/api/user/login/phone": {
+      "post": {
+        "summary": "手机号验证码登录",
+        "deprecated": false,
+        "description": "🔓 无需鉴权；需要 Turnstile 验证码",
+        "tags": [
+          "用户登陆注册"
+        ],
+        "parameters": [
+          {
+            "name": "turnstile",
+            "in": "query",
+            "description": "Turnstile 验证令牌",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "phone",
+                  "code"
+                ],
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "description": "手机号"
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "短信验证码"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "Combination343": []
+          },
+          {
+            "Combination1243": []
+          }
+        ]
+      }
+    },
+    "/api/user/register/phone": {
+      "post": {
+        "summary": "手机号验证码注册",
+        "deprecated": false,
+        "description": "🔓 无需鉴权；需要 Turnstile 验证码",
+        "tags": [
+          "用户登陆注册"
+        ],
+        "parameters": [
+          {
+            "name": "turnstile",
+            "in": "query",
+            "description": "Turnstile 验证令牌",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "phone",
+                  "code"
+                ],
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "description": "手机号"
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "短信验证码"
+                  },
+                  "username": {
+                    "type": "string",
+                    "description": "自定义用户名（可选，3-20位字母/数字/下划线）"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "密码（可选，默认随机生成）"
+                  },
+                  "aff_code": {
+                    "type": "string",
+                    "description": "邀请码"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "Combination343": []
+          },
+          {
+            "Combination1243": []
+          }
+        ]
+      }
+    },
+    "/api/user/check-username": {
+      "get": {
+        "summary": "检查用户名是否已存在",
+        "deprecated": false,
+        "description": "🔓 无需鉴权",
+        "tags": [
+          "用户登陆注册"
+        ],
+        "parameters": [
+          {
+            "name": "username",
+            "in": "query",
+            "required": true,
+            "description": "要检查的用户名",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "exists": {
+                          "type": "boolean",
+                          "description": "true 表示用户名已存在"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "Combination343": []
+          },
+          {
+            "Combination1243": []
+          }
+        ]
+      }
+    },
+    "/api/user/phone/bind": {
+      "post": {
+        "summary": "绑定手机号",
+        "deprecated": false,
+        "description": "🔐 需要登录（Session / AccessToken）",
+        "tags": [
+          "用户绑定"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "phone",
+                  "code"
+                ],
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "description": "手机号"
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "短信验证码"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "Combination343": []
+          },
+          {
+            "Combination1243": []
+          }
+        ]
+      }
+    },
+    "/api/user/phone/rebind": {
+      "put": {
+        "summary": "换绑手机号",
+        "deprecated": false,
+        "description": "🔐 需要登录（Session / AccessToken）；新手机号不能已被其他用户绑定",
+        "tags": [
+          "用户绑定"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "phone",
+                  "code"
+                ],
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "description": "新手机号"
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "新手机号的短信验证码"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "Combination343": []
+          },
+          {
+            "Combination1243": []
+          }
+        ]
+      }
+    }
+  },
+  "servers": [],
+  "security": [
+    {
+      "Combination343": []
+    },
+    {
+      "Combination1243": []
+    }
+  ]
+}

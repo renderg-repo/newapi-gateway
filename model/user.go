@@ -50,6 +50,9 @@ type User struct {
 	Setting          string         `json:"setting" gorm:"type:text;column:setting"`
 	Remark           string         `json:"remark,omitempty" gorm:"type:varchar(255)" validate:"max=255"`
 	StripeCustomer   string         `json:"stripe_customer" gorm:"type:varchar(64);column:stripe_customer;index"`
+	Phone            string         `json:"phone" gorm:"index" validate:"max=20"`
+	CreatedAt        int64          `json:"created_at" gorm:"autoCreateTime;column:created_at"`
+	LastLoginAt      int64          `json:"last_login_at" gorm:"default:0;column:last_login_at"`
 }
 
 func (user *User) ToBaseUser() *UserBase {
@@ -951,6 +954,12 @@ func GetRootUser() (user *User) {
 	return user
 }
 
+func UpdateUserLastLoginAt(id int) {
+	if err := DB.Model(&User{}).Where("id = ?", id).Update("last_login_at", common.GetTimestamp()).Error; err != nil {
+		common.SysLog("failed to update user last_login_at: " + err.Error())
+	}
+}
+
 func UpdateUserUsedQuotaAndRequestCount(id int, quota int) {
 	if common.BatchUpdateEnabled {
 		addNewRecord(BatchUpdateTypeUsedQuota, id, quota)
@@ -1045,4 +1054,22 @@ func RootUserExists() bool {
 		return false
 	}
 	return true
+}
+
+func IsPhoneAlreadyTaken(phone string) bool {
+	if phone == "" {
+		return false
+	}
+	return DB.Unscoped().Where("phone = ?", phone).Find(&User{}).RowsAffected == 1
+}
+
+func (user *User) FillUserByPhone() error {
+	if user.Phone == "" {
+		return errors.New("phone is empty")
+	}
+	err := DB.Where("phone = ?", user.Phone).First(user).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+	return err
 }

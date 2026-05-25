@@ -7,6 +7,7 @@ package i18n
 const (
 	MsgInvalidParams     = "common.invalid_params"
 	MsgDatabaseError     = "common.database_error"
+	MsgTooManyRequests   = "common.too_many_requests"
 	MsgRetryLater        = "common.retry_later"
 	MsgGenerateFailed    = "common.generate_failed"
 	MsgNotFound          = "common.not_found"
@@ -26,6 +27,7 @@ const (
 	MsgAlreadyExists     = "common.already_exists"
 	MsgNameCannotBeEmpty = "common.name_cannot_be_empty"
 	MsgBatchTooMany      = "common.batch_too_many"
+	MsgSMSSendFailed     = "common.sms_send_failed"
 )
 
 // Auth middleware messages
@@ -82,6 +84,7 @@ const (
 	MsgUserExists                    = "user.exists"
 	MsgUserNotExists                 = "user.not_exists"
 	MsgUserDisabled                  = "user.disabled"
+	MsgUserAccountDisabled           = "user.account_disabled"
 	MsgUserSessionSaveFailed         = "user.session_save_failed"
 	MsgUserRequire2FA                = "user.require_2fa"
 	MsgUserEmailVerificationRequired = "user.email_verification_required"
@@ -114,6 +117,8 @@ const (
 	MsgUserTelegramNotBound          = "user.telegram_not_bound"
 	MsgUserLinuxDOIdEmpty            = "user.linux_do_id_empty"
 	MsgUserQuotaChangeZero           = "user.quota_change_zero"
+	MsgUserInvalidUsernameFormat     = "user.invalid_username_format"
+	MsgPhoneAlreadyBound             = "user.phone_already_bound"
 )
 
 // Quota related messages
@@ -304,18 +309,19 @@ const (
 
 // Distributor related messages
 const (
-	MsgDistributorInvalidRequest      = "distributor.invalid_request"
-	MsgDistributorInvalidChannelId    = "distributor.invalid_channel_id"
-	MsgDistributorChannelDisabled     = "distributor.channel_disabled"
-	MsgDistributorTokenNoModelAccess  = "distributor.token_no_model_access"
-	MsgDistributorTokenModelForbidden = "distributor.token_model_forbidden"
-	MsgDistributorModelNameRequired   = "distributor.model_name_required"
-	MsgDistributorInvalidPlayground   = "distributor.invalid_playground_request"
-	MsgDistributorGroupAccessDenied   = "distributor.group_access_denied"
-	MsgDistributorGetChannelFailed    = "distributor.get_channel_failed"
-	MsgDistributorNoAvailableChannel  = "distributor.no_available_channel"
-	MsgDistributorInvalidMidjourney   = "distributor.invalid_midjourney_request"
-	MsgDistributorInvalidParseModel   = "distributor.invalid_request_parse_model"
+	MsgDistributorInvalidRequest          = "distributor.invalid_request"
+	MsgDistributorInvalidChannelId        = "distributor.invalid_channel_id"
+	MsgDistributorChannelDisabled         = "distributor.channel_disabled"
+	MsgDistributorAffinityChannelDisabled = "distributor.affinity_channel_disabled"
+	MsgDistributorTokenNoModelAccess      = "distributor.token_no_model_access"
+	MsgDistributorTokenModelForbidden     = "distributor.token_model_forbidden"
+	MsgDistributorModelNameRequired       = "distributor.model_name_required"
+	MsgDistributorInvalidPlayground       = "distributor.invalid_playground_request"
+	MsgDistributorGroupAccessDenied       = "distributor.group_access_denied"
+	MsgDistributorGetChannelFailed        = "distributor.get_channel_failed"
+	MsgDistributorNoAvailableChannel      = "distributor.no_available_channel"
+	MsgDistributorInvalidMidjourney       = "distributor.invalid_midjourney_request"
+	MsgDistributorInvalidParseModel       = "distributor.invalid_request_parse_model"
 )
 
 // Custom OAuth provider related messages

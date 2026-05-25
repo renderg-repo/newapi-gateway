@@ -1,0 +1,296 @@
+package service
+
+import (
+	"math"
+	"sort"
+	"strings"
+
+	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/model"
+	perfmetrics "github.com/QuantumNous/new-api/pkg/perf_metrics"
+	sidecarModel "github.com/QuantumNous/new-api/sidecar/model"
+	"github.com/QuantumNous/new-api/setting/ratio_setting"
+)
+
+type CatalogModel struct {
+	ModelName              string   `json:"model_name"`
+	Description            string   `json:"description,omitempty"`
+	VendorID               int      `json:"vendor_id,omitempty"`
+	VendorName             string   `json:"vendor_name,omitempty"`
+	VendorIcon             string   `json:"vendor_icon,omitempty"`
+	ContextLength          int      `json:"context_length"`
+	MaxOutputTokens        int      `json:"max_output_tokens"`
+	Capabilities           []string `json:"capabilities"`
+	ModelRatio             float64  `json:"model_ratio"`
+	CompletionRatio        float64  `json:"completion_ratio"`
+	ModelPrice             float64  `json:"model_price"`
+	CacheRatio             *float64 `json:"cache_ratio,omitempty"`
+	CreateCacheRatio       *float64 `json:"create_cache_ratio,omitempty"`
+	ImageRatio             *float64 `json:"image_ratio,omitempty"`
+	AudioRatio             *float64 `json:"audio_ratio,omitempty"`
+	AudioCompletionRatio   *float64 `json:"audio_completion_ratio,omitempty"`
+	EnableGroup            []string `json:"enable_groups"`
+	Tags                   string   `json:"tags,omitempty"`
+	SupportedEndpointTypes []string `json:"supported_endpoint_types,omitempty"`
+	BillingMode            string   `json:"billing_mode,omitempty"`
+	BillingExpr            string   `json:"billing_expr,omitempty"`
+	Icon                   string   `json:"icon,omitempty"`
+	ReleaseDate            string   `json:"release_date,omitempty"`
+	KnowledgeCutoff        string   `json:"knowledge_cutoff,omitempty"`
+	ParameterCount         string   `json:"parameter_count,omitempty"`
+	InputPrice             float64  `json:"input_price"`
+	OutputPrice            float64  `json:"output_price"`
+	// Runtime metrics
+	Status                 string   `json:"status"`
+	AvgLatencyMs           int64    `json:"avg_latency_ms"`
+	SuccessRate            float64  `json:"success_rate"`
+	IsHot                  bool     `json:"is_hot"`
+	RequestCount           int64    `json:"request_count"`
+}
+
+func parseCapabilities(capStr string) []string {
+	if capStr == "" {
+		return []string{}
+	}
+	var caps []string
+	if err := common.UnmarshalJsonStr(capStr, &caps); err != nil {
+		return []string{}
+	}
+	return caps
+}
+
+func overlaySpec(cm *CatalogModel, spec *sidecarModel.ModelSpec) {
+	cm.ContextLength = spec.ContextLength
+	cm.MaxOutputTokens = spec.MaxOutputTokens
+	cm.Capabilities = parseCapabilities(spec.Capabilities)
+	if spec.Description != "" {
+		cm.Description = spec.Description
+	}
+	if spec.Icon != "" {
+		cm.Icon = spec.Icon
+	}
+	cm.ReleaseDate = spec.ReleaseDate
+	cm.KnowledgeCutoff = spec.KnowledgeCutoff
+	cm.ParameterCount = spec.ParameterCount
+}
+
+func minGroupRatio(enableGroups []string) float64 {
+	if len(enableGroups) == 0 {
+		return 1
+	}
+	groupRatios := ratio_setting.GetGroupRatioCopy()
+	minRatio := math.MaxFloat64
+	for _, g := range enableGroups {
+		if r, ok := groupRatios[g]; ok && r < minRatio {
+			minRatio = r
+		}
+	}
+	if minRatio == math.MaxFloat64 {
+		return 1
+	}
+	return minRatio
+}
+
+func buildCatalogModel(p model.Pricing, vendorMap map[int]model.PricingVendor) CatalogModel {
+	ratio := minGroupRatio(p.EnableGroup)
+	inputPrice := p.ModelRatio * 2 * ratio
+	outputPrice := inputPrice * p.CompletionRatio
+
+	cm := CatalogModel{
+		ModelName:            p.ModelName,
+		Description:          p.Description,
+		VendorID:             p.VendorID,
+		ModelRatio:           p.ModelRatio,
+		CompletionRatio:      p.CompletionRatio,
+		ModelPrice:           p.ModelPrice,
+		CacheRatio:           p.CacheRatio,
+		CreateCacheRatio:     p.CreateCacheRatio,
+		ImageRatio:           p.ImageRatio,
+		AudioRatio:           p.AudioRatio,
+		AudioCompletionRatio: p.AudioCompletionRatio,
+		EnableGroup:          p.EnableGroup,
+		Tags:                 p.Tags,
+		BillingMode:          p.BillingMode,
+		BillingExpr:          p.BillingExpr,
+		Icon:                 p.Icon,
+		InputPrice:           inputPrice,
+		OutputPrice:          outputPrice,
+	}
+	if v, ok := vendorMap[p.VendorID]; ok {
+		cm.VendorName = v.Name
+		cm.VendorIcon = v.Icon
+	}
+	for _, et := range p.SupportedEndpointTypes {
+		cm.SupportedEndpointTypes = append(cm.SupportedEndpointTypes, string(et))
+	}
+	return cm
+}
+
+func statusFromSuccessRate(rate float64, requestCount int64) string {
+	if requestCount == 0 {
+		return "unknown"
+	}
+	if rate >= 95 {
+		return "running"
+	}
+	if rate >= 80 {
+		return "degraded"
+	}
+	return "down"
+}
+
+func injectRuntimeMetrics(models []CatalogModel) {
+	summary, err := perfmetrics.QuerySummaryAll(24)
+	if err != nil {
+		common.SysLog("failed to query perf metrics summary: " + err.Error())
+		for i := range models {
+			models[i].Status = "unknown"
+		}
+		return
+	}
+
+	metricMap := make(map[string]perfmetrics.ModelSummary, len(summary.Models))
+	for _, m := range summary.Models {
+		metricMap[m.ModelName] = m
+	}
+
+	type candidate struct {
+		idx   int
+		count int64
+	}
+	var candidates []candidate
+	for i := range models {
+		if m, ok := metricMap[models[i].ModelName]; ok {
+			models[i].AvgLatencyMs = m.AvgLatencyMs
+			models[i].SuccessRate = m.SuccessRate
+			models[i].RequestCount = m.RequestCount
+			models[i].Status = statusFromSuccessRate(m.SuccessRate, m.RequestCount)
+			if m.RequestCount > 0 {
+				candidates = append(candidates, candidate{i, m.RequestCount})
+			}
+		} else {
+			models[i].Status = "unknown"
+		}
+	}
+
+	sort.Slice(candidates, func(i, j int) bool {
+		return candidates[i].count > candidates[j].count
+	})
+	hotLimit := 10
+	if len(candidates) < hotLimit {
+		hotLimit = len(candidates)
+	}
+	for i := 0; i < hotLimit; i++ {
+		models[candidates[i].idx].IsHot = true
+	}
+}
+
+func injectRuntimeMetricSingle(cm *CatalogModel) {
+	summary, err := perfmetrics.QuerySummaryAll(24)
+	if err != nil {
+		common.SysLog("failed to query perf metrics summary: " + err.Error())
+		cm.Status = "unknown"
+		return
+	}
+	for _, m := range summary.Models {
+		if m.ModelName == cm.ModelName {
+			cm.AvgLatencyMs = m.AvgLatencyMs
+			cm.SuccessRate = m.SuccessRate
+			cm.RequestCount = m.RequestCount
+			cm.Status = statusFromSuccessRate(m.SuccessRate, m.RequestCount)
+			return
+		}
+	}
+	cm.Status = "unknown"
+}
+
+func GetModelCatalog(vendorFilter string, capabilitiesFilter string) ([]CatalogModel, error) {
+	pricing := model.GetPricing()
+	vendors := model.GetVendors()
+	vendorMap := make(map[int]model.PricingVendor)
+	for _, v := range vendors {
+		vendorMap[v.ID] = v
+	}
+
+	var specs []*sidecarModel.ModelSpec
+	err := sidecarModel.DB.Where("status = ?", 1).Find(&specs).Error
+	if err != nil {
+		return nil, err
+	}
+	specMap := make(map[string]*sidecarModel.ModelSpec)
+	for _, s := range specs {
+		specMap[s.ModelName] = s
+	}
+
+	// 解析能力过滤条件
+	var capFilters []string
+	if capabilitiesFilter != "" {
+		capFilters = strings.Split(capabilitiesFilter, ",")
+		for i := range capFilters {
+			capFilters[i] = strings.TrimSpace(capFilters[i])
+		}
+	}
+
+	result := make([]CatalogModel, 0, len(pricing))
+	for _, p := range pricing {
+		cm := buildCatalogModel(p, vendorMap)
+		if spec, ok := specMap[p.ModelName]; ok {
+			overlaySpec(&cm, spec)
+		}
+
+		// 按提供商过滤
+		if vendorFilter != "" && cm.VendorName != vendorFilter {
+			continue
+		}
+
+		// 按能力过滤（要求模型具备所有指定的能力）
+		if len(capFilters) > 0 {
+			capSet := make(map[string]struct{}, len(cm.Capabilities))
+			for _, c := range cm.Capabilities {
+				capSet[c] = struct{}{}
+			}
+			match := true
+			for _, cf := range capFilters {
+				if _, ok := capSet[cf]; !ok {
+					match = false
+					break
+				}
+			}
+			if !match {
+				continue
+			}
+		}
+
+		result = append(result, cm)
+	}
+	injectRuntimeMetrics(result)
+	return result, nil
+}
+
+func GetModelCatalogByName(modelName string) (*CatalogModel, error) {
+	pricing := model.GetPricing()
+	vendors := model.GetVendors()
+	vendorMap := make(map[int]model.PricingVendor)
+	for _, v := range vendors {
+		vendorMap[v.ID] = v
+	}
+
+	var target *model.Pricing
+	for i := range pricing {
+		if pricing[i].ModelName == modelName {
+			target = &pricing[i]
+			break
+		}
+	}
+	if target == nil {
+		return nil, nil
+	}
+
+	cm := buildCatalogModel(*target, vendorMap)
+	spec, err := sidecarModel.GetModelSpecByModelName(modelName)
+	if err == nil && spec != nil {
+		overlaySpec(&cm, spec)
+	}
+	injectRuntimeMetricSingle(&cm)
+	return &cm, nil
+}
