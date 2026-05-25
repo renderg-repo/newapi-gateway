@@ -709,6 +709,18 @@ func UpdateSelf(c *gin.Context) {
 		return
 	}
 
+	if user.Username != "" {
+		currentUser, err := model.GetUserById(c.GetInt("id"), false)
+		if err != nil {
+			common.ApiError(c, err)
+			return
+		}
+		if user.Username != currentUser.Username && model.IsUsernameTakenByOther(user.Username, currentUser.Id) {
+			common.ApiErrorI18n(c, i18n.MsgUserExists)
+			return
+		}
+	}
+
 	cleanUser := model.User{
 		Id:          c.GetInt("id"),
 		Username:    user.Username,

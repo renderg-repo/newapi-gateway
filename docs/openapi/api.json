@@ -1087,7 +1087,7 @@
       "put": {
         "summary": "更新当前用户信息",
         "deprecated": false,
-        "description": "🔐 需要登录（User权限）",
+        "description": "🔐 需要登录（User权限）\n支持修改 username、display_name、password。修改 username 时会校验是否已被其他用户占用。",
         "tags": [
           "用户管理"
         ],
@@ -4793,6 +4793,63 @@
             "Combination1243": []
           }
         ]
+      }
+    },
+    "/api/models/recommended": {
+      "get": {
+        "summary": "获取热门模型推荐列表",
+        "deprecated": false,
+        "description": "🔓 无需鉴权\n读取 ModelRecommendations 配置，关联模型元数据和厂商信息返回推荐列表。",
+        "tags": [
+          "模型管理"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "model_name": {
+                            "type": "string"
+                          },
+                          "display_name": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "vendor_name": {
+                            "type": "string"
+                          },
+                          "vendor_icon": {
+                            "type": "string"
+                          },
+                          "icon": {
+                            "type": "string"
+                          },
+                          "order": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/option/": {
