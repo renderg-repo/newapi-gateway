@@ -15,6 +15,6 @@ pluginRegistry.registerPaymentGateway('alipay_page', {
   category: 'native',
 });
 
-// 注册设置页面 Card
-pluginRegistry.registerSettingCard(SettingsWechatPay);
-pluginRegistry.registerSettingCard(SettingsAlipay);
+// 注册支付设置页面 Card
+pluginRegistry.registerPaymentSettingCard(SettingsWechatPay);
+pluginRegistry.registerPaymentSettingCard(SettingsAlipay);

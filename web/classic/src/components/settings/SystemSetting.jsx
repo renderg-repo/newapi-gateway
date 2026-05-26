@@ -43,6 +43,9 @@ import {
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import CustomOAuthSetting from './CustomOAuthSetting';
+import { pluginRegistry } from '../../helpers/pluginRegistry';
+// 触发 sidecar 前端注册
+import '../../sidecar/frontend/wechat-qrcode-login';
 
 const SystemSetting = () => {
   const { t } = useTranslation();
@@ -1707,6 +1710,13 @@ const SystemSetting = () => {
                   </Button>
                 </Form.Section>
               </Card>
+
+              {/* Sidecar 微信扫码登录设置 */}
+              {pluginRegistry.getAllSystemSettingCards().map((CardComponent, idx) => (
+                <Card key={idx}>
+                  <CardComponent options={inputs} refresh={getOptions} />
+                </Card>
+              ))}
 
               <Card>
                 <Form.Section text={t('配置 Telegram 登录')}>

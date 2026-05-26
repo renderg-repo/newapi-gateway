@@ -225,7 +225,7 @@ const PaymentSetting = () => {
             {/*</Tabs.TabPane>*/}
           </Tabs>
         </Card>
-        {pluginRegistry.getAllSettingCards().map((CardComponent, idx) => (
+        {pluginRegistry.getAllPaymentSettingCards().map((CardComponent, idx) => (
           <Card key={idx} style={{ marginTop: '10px' }}>
             <CardComponent options={inputs} refresh={onRefresh} />
           </Card>
