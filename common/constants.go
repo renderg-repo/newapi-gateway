@@ -119,6 +119,10 @@ var WeChatAppID = ""
 var WeChatAppSecret = ""
 var WeChatReceiveToken = ""
 
+// WeChat integration via HPC (智算) system
+var WeChatHpcServerAddress = ""
+var WeChatHpcCallbackToken = ""
+
 var TurnstileSiteKey = ""
 var TurnstileSecretKey = ""
 

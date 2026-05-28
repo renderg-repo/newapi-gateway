@@ -40,9 +40,8 @@ export default function SettingsWechatQRCode(props) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [inputs, setInputs] = useState({
-    WeChatAppID: '',
-    WeChatAppSecret: '',
-    WeChatReceiveToken: '',
+    WeChatHpcServerAddress: '',
+    WeChatHpcCallbackToken: '',
   });
   const [originInputs, setOriginInputs] = useState({});
   const formApiRef = useRef(null);
@@ -50,9 +49,8 @@ export default function SettingsWechatQRCode(props) {
   useEffect(() => {
     if (props.options && formApiRef.current) {
       const currentInputs = {
-        WeChatAppID: props.options.WeChatAppID || '',
-        WeChatAppSecret: props.options.WeChatAppSecret || '',
-        WeChatReceiveToken: props.options.WeChatReceiveToken || '',
+        WeChatHpcServerAddress: props.options.WeChatHpcServerAddress || '',
+        WeChatHpcCallbackToken: props.options.WeChatHpcCallbackToken || '',
       };
       setInputs(currentInputs);
       setOriginInputs({ ...currentInputs });
@@ -65,27 +63,23 @@ export default function SettingsWechatQRCode(props) {
   };
 
   const submitWechatQRCode = async () => {
-    if (props.options.ServerAddress === '') {
-      showError(t('请先填写服务器地址'));
-      return;
-    }
-
     setLoading(true);
     try {
       const options = [];
 
-      if (inputs.WeChatAppID !== '') {
-        options.push({ key: 'WeChatAppID', value: inputs.WeChatAppID });
+      if (inputs.WeChatHpcServerAddress !== '') {
+        options.push({
+          key: 'WeChatHpcServerAddress',
+          value: removeTrailingSlash(inputs.WeChatHpcServerAddress)
+        });
       }
-      if (
-        inputs.WeChatAppSecret &&
-        inputs.WeChatAppSecret !== '' &&
-        inputs.WeChatAppSecret !== originInputs.WeChatAppSecret
-      ) {
-        options.push({ key: 'WeChatAppSecret', value: inputs.WeChatAppSecret });
-      }
-      if (inputs.WeChatReceiveToken !== '') {
-        options.push({ key: 'WeChatReceiveToken', value: inputs.WeChatReceiveToken });
+
+      if (inputs.WeChatHpcCallbackToken !== '' &&
+          inputs.WeChatHpcCallbackToken !== originInputs.WeChatHpcCallbackToken) {
+        options.push({
+          key: 'WeChatHpcCallbackToken',
+          value: inputs.WeChatHpcCallbackToken
+        });
       }
 
       if (options.length === 0) {
@@ -128,33 +122,22 @@ export default function SettingsWechatQRCode(props) {
       >
         <Form.Section text={t('微信扫码登录设置')}>
           <Text>
-            {t('使用微信公众号官方接口，用户扫码完成登录')}
+            {t('通过智算系统的微信公众号接口，用户扫码完成登录')}
           </Text>
-          <Banner
-            type='info'
-            description={`${t('回调地址')}：${props.options.ServerAddress ? removeTrailingSlash(props.options.ServerAddress) : t('网站地址')}/api/weixin/receiveMessage`}
-          />
           <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 24, xl: 24, xxl: 24 }} style={{ marginTop: 16 }}>
-            <Col xs={24} sm={24} md={8} lg={8} xl={8}>
+            <Col xs={24} sm={24} md={12} lg={12} xl={12}>
               <Form.Input
-                field='WeChatAppID'
-                label={t('微信公众号 AppID')}
-                placeholder={t('微信公众号的 AppID')}
+                field='WeChatHpcServerAddress'
+                label={t('智算系统服务器地址')}
+                placeholder='例如：https://hpc.example.com'
               />
             </Col>
-            <Col xs={24} sm={24} md={8} lg={8} xl={8}>
+            <Col xs={24} sm={24} md={12} lg={12} xl={12}>
               <Form.Input
-                field='WeChatAppSecret'
-                label={t('微信公众号 AppSecret')}
-                placeholder={t('敏感信息不会发送到前端显示')}
+                field='WeChatHpcCallbackToken'
+                label={t('回调接口验证Token')}
+                placeholder='输入一个安全的Token'
                 type='password'
-              />
-            </Col>
-            <Col xs={24} sm={24} md={8} lg={8} xl={8}>
-              <Form.Input
-                field='WeChatReceiveToken'
-                label={t('消息回调 Token')}
-                placeholder={t('微信公众号消息回调验证 Token')}
               />
             </Col>
           </Row>
