@@ -1,44 +1,16 @@
 package service
 
 import (
-	"crypto/sha1"
-	"encoding/xml"
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"sort"
-	"strconv"
-	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
 )
-
-// ---------- XML message types for WeChat event callbacks ----------
-
-// WeChatEncryptedMessage is the top-level XML structure from WeChat.
-type WeChatEncryptedMessage struct {
-	XMLName      xml.Name `xml:"xml"`
-	ToUserName   string   `xml:"ToUserName"`
-	FromUserName  string   `xml:"FromUserName"`
-	CreateTime    int64    `xml:"CreateTime"`
-	MsgType      string   `xml:"MsgType"`
-	Content       string   `xml:"Content"`
-	MsgID        int64    `xml:"MsgId"`
-	AgentID      int      `xml:"AgentID"`
-
-	// Event fields
-	Event     string  `xml:"Event"`
-	EventKey  string  `xml:"EventKey"`
-	Ticket    string  `xml:"Ticket"`
-	Latitude  float64 `xml:"Latitude"`
-	Longitude float64 `xml:"Longitude"`
-	Precision float64 `xml:"Precision"`
-}
-
-// ---------- QRCode session types ----------
 
 // QRCodeStatus represents the status of a QR code login session.
 type QRCodeStatus string
@@ -48,42 +20,29 @@ const (
 	QRCodeStatusScanned   QRCodeStatus = "scanned"
 	QRCodeStatusConfirmed QRCodeStatus = "confirmed"
 	QRCodeStatusExpired   QRCodeStatus = "expired"
+	QRCodeStatusNeedBind  QRCodeStatus = "need_bind"
 )
 
 const (
-	qrcodeTTL            = 5 * time.Minute
-	cleanupInterval      = 1 * time.Minute
-	accessTokenThreshold = 30 * time.Minute // refresh if TTL < 30min
+	qrcodeTTL           = 5 * time.Minute
+	cleanupInterval     = 1 * time.Minute
 	redisTicketPrefix   = "wechat:qrcode:ticket:"
-	redisScenePrefix     = "wechat:qrcode:scene:"
-	redisTokenKey       = "wechat:qrcode:token"
+	redisScenePrefix    = "wechat:qrcode:scene:"
 )
 
 // QRCodeSession holds the state of a single QR code login attempt.
 type QRCodeSession struct {
-	Ticket    string       `json:"ticket"`
-	SceneID   int          `json:"scene_id"`
-	Status    QRCodeStatus `json:"status"`
-	OpenID    string       `json:"openid,omitempty"`
-	UserID    int          `json:"user_id,omitempty"`
-	CreatedAt time.Time    `json:"created_at"`
-	ExpiresAt time.Time    `json:"expires_at"`
-}
-
-// WeChatToken holds the cached access_token with expiry.
-type WeChatToken struct {
-	AccessToken string
-	ExpiresAt   time.Time
+	Ticket     string        `json:"ticket"`
+	Status     QRCodeStatus  `json:"status"`
+	OpenID     string        `json:"openid,omitempty"`
+	UserID     int           `json:"user_id,omitempty"`
+	CreatedAt  time.Time     `json:"created_at"`
+	ExpiresAt  time.Time     `json:"expires_at"`
 }
 
 var (
 	ticketStore sync.Map // key: ticket UUID, value: *QRCodeSession
-	sceneStore  sync.Map // key: scene_id (int), value: *QRCodeSession
 	cleanupOnce sync.Once
-
-	accessTokenMu     sync.RWMutex
-	cachedToken       atomic.Value // stores *WeChatToken
-	sceneIDCounter    atomic.Int64
 )
 
 // ---------- helper functions for Redis fallback ----------
@@ -96,17 +55,12 @@ func getRedisTicketKey(ticket string) string {
 	return redisTicketPrefix + ticket
 }
 
-func getRedisSceneKey(sceneID int) string {
-	return redisScenePrefix + strconv.Itoa(sceneID)
-}
-
 func saveSessionToRedis(session *QRCodeSession) error {
 	if !useRedis() {
 		return nil
 	}
 
 	ticketKey := getRedisTicketKey(session.Ticket)
-	sceneKey := getRedisSceneKey(session.SceneID)
 
 	// Use JSON string storage
 	data, err := common.Marshal(session)
@@ -119,10 +73,7 @@ func saveSessionToRedis(session *QRCodeSession) error {
 		ttl = qrcodeTTL
 	}
 
-	if err := common.RedisSet(ticketKey, string(data), ttl); err != nil {
-		return err
-	}
-	return common.RedisSet(sceneKey, string(data), ttl)
+	return common.RedisSet(ticketKey, string(data), ttl)
 }
 
 func getSessionFromRedisByTicket(ticket string) (*QRCodeSession, bool) {
@@ -151,247 +102,68 @@ func getSessionFromRedisByTicket(ticket string) (*QRCodeSession, bool) {
 	return &session, true
 }
 
-func getSessionFromRedisBySceneID(sceneID int) (*QRCodeSession, bool) {
-	if !useRedis() {
-		return nil, false
-	}
-
-	key := getRedisSceneKey(sceneID)
-	data, err := common.RedisGet(key)
-	if err != nil {
-		return nil, false
-	}
-
-	var session QRCodeSession
-	if err := common.UnmarshalJsonStr(data, &session); err != nil {
-		return nil, false
-	}
-
-	if time.Now().After(session.ExpiresAt) && session.Status == QRCodeStatusPending {
-		session.Status = QRCodeStatusExpired
-		_ = saveSessionToRedis(&session)
-	}
-
-	return &session, true
-}
-
 func deleteSessionFromRedis(session *QRCodeSession) {
 	if !useRedis() {
 		return
 	}
 
 	ticketKey := getRedisTicketKey(session.Ticket)
-	sceneKey := getRedisSceneKey(session.SceneID)
 	_ = common.RedisDel(ticketKey)
-	_ = common.RedisDel(sceneKey)
-}
-
-func saveTokenToRedis(token *WeChatToken) error {
-	if !useRedis() {
-		return nil
-	}
-
-	data, err := common.Marshal(token)
-	if err != nil {
-		return err
-	}
-
-	ttl := time.Until(token.ExpiresAt)
-	if ttl <= 0 {
-		ttl = time.Hour // Fallback TTL
-	}
-
-	return common.RedisSet(redisTokenKey, string(data), ttl)
-}
-
-func getTokenFromRedis() (*WeChatToken, bool) {
-	if !useRedis() {
-		return nil, false
-	}
-
-	data, err := common.RedisGet(redisTokenKey)
-	if err != nil {
-		return nil, false
-	}
-
-	var token WeChatToken
-	if err := common.UnmarshalJsonStr(data, &token); err != nil {
-		return nil, false
-	}
-
-	return &token, true
 }
 
 // ---------- public API ----------
 
-// VerifySignature checks the WeChat signature for message callback validation.
-func VerifySignature(signature, timestamp, nonce string) bool {
-	token := common.WeChatReceiveToken
-	if token == "" {
-		return false
-	}
-	parts := []string{token, timestamp, nonce}
-	sort.Strings(parts)
-	hash := sha1.Sum([]byte(strings.Join(parts, "")))
-	expected := fmt.Sprintf("%x", hash)
-	return expected == signature
-}
+// CreateQRCodeSession creates a new QR code login session by calling HPC system API.
+func CreateQRCodeSession() (*QRCodeSession, error) {
+	startCleanupRoutine()
 
-// GetAccessToken returns a valid WeChat access_token, refreshing if needed.
-func GetAccessToken() (string, error) {
-	// First check in-memory cache
-	if v := cachedToken.Load(); v != nil {
-		t := v.(*WeChatToken)
-		if time.Now().Before(t.ExpiresAt) {
-			return t.AccessToken, nil
-		}
+	if common.WeChatHpcServerAddress == "" {
+		return nil, fmt.Errorf("WeChat HPC server address not configured")
 	}
 
-	// Then check Redis
-	if token, ok := getTokenFromRedis(); ok {
-		if time.Now().Before(token.ExpiresAt) {
-			// Refresh in-memory cache
-			cachedToken.Store(token)
-			return token.AccessToken, nil
-		}
-	}
-
-	accessTokenMu.Lock()
-	defer accessTokenMu.Unlock()
-
-	// Double-check after acquiring lock.
-	if v := cachedToken.Load(); v != nil {
-		t := v.(*WeChatToken)
-		if time.Now().Before(t.ExpiresAt) {
-			return t.AccessToken, nil
-		}
-	}
-
-	appID := common.WeChatAppID
-	appSecret := common.WeChatAppSecret
-	if appID == "" || appSecret == "" {
-		return "", fmt.Errorf("WeChat AppID or AppSecret not configured")
-	}
-
-	url := fmt.Sprintf("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s", appID, appSecret)
+	// Call HPC system API to get QR code
+	url := fmt.Sprintf("%s/weixin/getQrCode?type=3", common.WeChatHpcServerAddress)
 	resp, err := http.Get(url)
 	if err != nil {
-		return "", fmt.Errorf("failed to request access_token: %w", err)
+		return nil, fmt.Errorf("failed to call HPC API: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("failed to read access_token response: %w", err)
+		return nil, fmt.Errorf("failed to read HPC API response: %w", err)
 	}
 
-	var result struct {
-		AccessToken string `json:"access_token"`
-		ExpiresIn   int    `json:"expires_in"`
-		Errcode     int    `json:"errcode"`
-		Errmsg      string `json:"errmsg"`
+	// Parse HPC response
+	var hpcResp struct {
+		Code int             `json:"code"`
+		Data json.RawMessage `json:"data"`
+		Message string       `json:"message"`
 	}
-	if err := common.UnmarshalJsonStr(string(body), &result); err != nil {
-		return "", fmt.Errorf("failed to parse access_token response: %w", err)
-	}
-	if result.Errcode != 0 {
-		return "", fmt.Errorf("wechat API error: %d %s", result.Errcode, result.Errmsg)
-	}
-	if result.AccessToken == "" {
-		return "", fmt.Errorf("empty access_token in response")
+	if err := common.UnmarshalJsonStr(string(body), &hpcResp); err != nil {
+		return nil, fmt.Errorf("failed to parse HPC API response: %w", err)
 	}
 
-	// WeChat tokens expire in 7200s; refresh at 30min remaining.
-	ttl := time.Duration(result.ExpiresIn) * time.Second
-	if ttl > accessTokenThreshold {
-		ttl -= accessTokenThreshold
-	}
-	token := &WeChatToken{
-		AccessToken: result.AccessToken,
-		ExpiresAt:   time.Now().Add(ttl),
-	}
-	cachedToken.Store(token)
-
-	// Save to Redis
-	_ = saveTokenToRedis(token)
-
-	return result.AccessToken, nil
-}
-
-// CreateTempQRCode creates a temporary QR code via WeChat API.
-// Returns the ticket and the QR code image URL.
-func CreateTempQRCode(sceneID int) (ticket string, qrcodeURL string, err error) {
-	accessToken, err := GetAccessToken()
-	if err != nil {
-		return "", "", err
+	if hpcResp.Code != 200 {
+		return nil, fmt.Errorf("HPC API error: %s", hpcResp.Message)
 	}
 
-	url := fmt.Sprintf("https://api.weixin.qq.com/cgi-bin/qrcode/create?access_token=%s", accessToken)
-
-	// QR_SCENE: temporary QR code, 600s expiry
-	body := map[string]any{
-		"expire_seconds": 600,
-		"action_name":    "QR_SCENE",
-		"action_info": map[string]any{
-			"scene": map[string]any{
-				"scene_id": sceneID,
-			},
-		},
+	// Parse the data field which contains the WeChat API response
+	var wechatResp struct {
+		Ticket string `json:"ticket"`
+	}
+	if err := common.UnmarshalJsonStr(string(hpcResp.Data), &wechatResp); err != nil {
+		return nil, fmt.Errorf("failed to parse WeChat response: %w", err)
 	}
 
-	jsonBody, err := common.Marshal(body)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to marshal request: %w", err)
+	if wechatResp.Ticket == "" {
+		return nil, fmt.Errorf("no ticket in HPC API response")
 	}
 
-	resp, err := http.Post(url, "application/json", strings.NewReader(string(jsonBody)))
-	if err != nil {
-		return "", "", fmt.Errorf("failed to create QR code: %w", err)
-	}
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to read QR code response: %w", err)
-	}
-
-	var result struct {
-		Ticket        string `json:"ticket"`
-		ExpireSeconds int    `json:"expire_seconds"`
-		URL           string `json:"url"`
-		Errcode       int    `json:"errcode"`
-		Errmsg        string `json:"errmsg"`
-	}
-	if err := common.UnmarshalJsonStr(string(respBody), &result); err != nil {
-		return "", "", fmt.Errorf("failed to parse QR code response: %w", err)
-	}
-	if result.Errcode != 0 {
-		return "", "", fmt.Errorf("wechat API error: %d %s", result.Errcode, result.Errmsg)
-	}
-	if result.Ticket == "" {
-		return "", "", fmt.Errorf("empty ticket in response")
-	}
-
-	// The QR code image URL.
-	imageURL := fmt.Sprintf("https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=%s", result.Ticket)
-
-	return result.Ticket, imageURL, nil
-}
-
-// GenerateSceneID returns a monotonically increasing scene ID (fits int32).
-func GenerateSceneID() int {
-	return int(sceneIDCounter.Add(1) % 100000)
-}
-
-// CreateQRCodeSession generates a new QR code login session with the given scene ID.
-func CreateQRCodeSession(sceneID int) *QRCodeSession {
-	startCleanupRoutine()
-
-	ticket := common.GetUUID()
+	// Create session with ticket from HPC
 	now := time.Now()
 	session := &QRCodeSession{
-		Ticket:    ticket,
-		SceneID:   sceneID,
+		Ticket:    wechatResp.Ticket,
 		Status:    QRCodeStatusPending,
 		CreatedAt: now,
 		ExpiresAt: now.Add(qrcodeTTL),
@@ -400,10 +172,10 @@ func CreateQRCodeSession(sceneID int) *QRCodeSession {
 	if useRedis() {
 		_ = saveSessionToRedis(session)
 	} else {
-		ticketStore.Store(ticket, session)
-		sceneStore.Store(sceneID, session)
+		ticketStore.Store(session.Ticket, session)
 	}
-	return session
+
+	return session, nil
 }
 
 // GetQRCodeSessionByTicket retrieves a session by ticket UUID.
@@ -420,62 +192,104 @@ func GetQRCodeSessionByTicket(ticket string) (*QRCodeSession, bool) {
 	if time.Now().After(session.ExpiresAt) && session.Status == QRCodeStatusPending {
 		session.Status = QRCodeStatusExpired
 		ticketStore.Store(ticket, session)
-		sceneStore.Store(session.SceneID, session)
 	}
 	return session, true
 }
 
-// GetQRCodeSessionBySceneID retrieves a session by scene_id.
-func GetQRCodeSessionBySceneID(sceneID int) (*QRCodeSession, bool) {
-	if useRedis() {
-		return getSessionFromRedisBySceneID(sceneID)
+// CheckQRCodeStatus polls HPC system to check QR code status.
+func CheckQRCodeStatus(ticket string) (*QRCodeSession, error) {
+	if common.WeChatHpcServerAddress == "" {
+		return nil, fmt.Errorf("WeChat HPC server address not configured")
 	}
 
-	val, ok := sceneStore.Load(sceneID)
-	if !ok {
-		return nil, false
+	// Call HPC system API to check QR code status
+	url := fmt.Sprintf("%s/weixin/checkQrCode", common.WeChatHpcServerAddress)
+	reqBody := map[string]string{"ticket": ticket}
+	jsonBody, err := common.Marshal(reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
-	session := val.(*QRCodeSession)
-	if time.Now().After(session.ExpiresAt) && session.Status == QRCodeStatusPending {
-		session.Status = QRCodeStatusExpired
-		ticketStore.Store(session.Ticket, session)
-		sceneStore.Store(sceneID, session)
-	}
-	return session, true
-}
 
-// UpdateQRCodeSessionStatus updates the status of a session.
-func UpdateQRCodeSessionStatus(ticket string, status QRCodeStatus, openID string, userID int) bool {
+	resp, err := http.Post(url, "application/json", bytes.NewReader(jsonBody))
+	if err != nil {
+		return nil, fmt.Errorf("failed to call HPC API: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read HPC API response: %w", err)
+	}
+
+	// Parse HPC response
+	var hpcResp struct {
+		Code int    `json:"code"`
+		Data struct {
+			Username string `json:"username"`
+			Token    string `json:"token"`
+		} `json:"data"`
+		Message string `json:"message"`
+	}
+	if err := common.UnmarshalJsonStr(string(body), &hpcResp); err != nil {
+		return nil, fmt.Errorf("failed to parse HPC API response: %w", err)
+	}
+
+	// Get current session
 	session, ok := GetQRCodeSessionByTicket(ticket)
 	if !ok {
-		return false
+		return nil, fmt.Errorf("session not found")
 	}
 
-	session.Status = status
-	if openID != "" {
-		session.OpenID = openID
-	}
-	if userID > 0 {
-		session.UserID = userID
+	// Update session status based on HPC response
+	switch hpcResp.Code {
+	case 200:
+		// Success - already logged in, mark as confirmed
+		session.Status = QRCodeStatusConfirmed
+		// We don't get openid from HPC, just mark status
+		// Username is available in hpcResp.Data.Username if needed
+	case 900:
+		// Waiting for scan
+		session.Status = QRCodeStatusPending
+	default:
+		// Other codes - treat as expired or failed
+		session.Status = QRCodeStatusExpired
 	}
 
 	if useRedis() {
 		_ = saveSessionToRedis(session)
 	} else {
 		ticketStore.Store(ticket, session)
-		sceneStore.Store(session.SceneID, session)
 	}
 
-	return true
+	return session, nil
 }
 
-// ParseWeChatMessage parses XML message bytes from WeChat callback.
-func ParseWeChatMessage(data []byte) (*WeChatEncryptedMessage, error) {
-	var msg WeChatEncryptedMessage
-	if err := xml.Unmarshal(data, &msg); err != nil {
-		return nil, fmt.Errorf("failed to parse XML: %w", err)
+// SaveSession saves session to redis or memory.
+func SaveSession(session *QRCodeSession) {
+	if useRedis() {
+		_ = saveSessionToRedis(session)
+	} else {
+		ticketStore.Store(session.Ticket, session)
 	}
-	return &msg, nil
+}
+
+// UpdateSessionByCallback updates session with openid from HPC system callback.
+func UpdateSessionByCallback(ticket string, openid string) (bool, error) {
+	session, ok := GetQRCodeSessionByTicket(ticket)
+	if !ok {
+		return false, fmt.Errorf("session not found for ticket: %s", ticket)
+	}
+
+	session.OpenID = openid
+	session.Status = QRCodeStatusConfirmed
+
+	if useRedis() {
+		_ = saveSessionToRedis(session)
+	} else {
+		ticketStore.Store(ticket, session)
+	}
+
+	return true, nil
 }
 
 // ---------- private helpers ----------
@@ -504,7 +318,6 @@ func cleanupExpiredSessions() {
 		session := val.(*QRCodeSession)
 		if now.After(session.ExpiresAt) {
 			ticketStore.Delete(key)
-			sceneStore.Delete(session.SceneID)
 		}
 		return true
 	})

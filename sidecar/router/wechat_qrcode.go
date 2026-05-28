@@ -6,14 +6,11 @@ import (
 )
 
 func RegisterWeChatQRCodeRoutes(apiRouter *gin.RouterGroup) {
-	// Direct WeChat Official Account API integration for QR scan login
+	// WeChat QR scan login via HPC (智算) system
 	weixinRoute := apiRouter.Group("/weixin")
 	{
 		weixinRoute.GET("/getQrCode", controller.GetQRCode)
-		weixinRoute.Any("/receiveMessage", controller.ReceiveMessage)
 		weixinRoute.POST("/checkQrCode", controller.CheckQRCode)
+		weixinRoute.POST("/hpcCallback", controller.HpcCallback)
 	}
-
-	// Legacy code-based login (kept for backward compatibility)
-	apiRouter.POST("/wechat/qrcode/exchange", controller.WeChatLoginByCode)
 }
