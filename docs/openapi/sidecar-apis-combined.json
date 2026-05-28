@@ -437,6 +437,44 @@
         "security": []
       }
     },
+    "/weixin/hpcCallback": {
+      "post": {
+        "tags": ["微信扫码登录"],
+        "summary": "接收 HPC 系统回调",
+        "description": "HPC 系统在用户扫码确认后调用此接口，传入 ticket、openid 和 token",
+        "parameters": [
+          {
+            "name": "API-TOKEN",
+            "in": "header",
+            "description": "HPC 回调验证 Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "回调请求",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HpcCallbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "400": {
+            "description": "参数错误或 Token 无效"
+          }
+        },
+        "security": []
+      }
+    },
     "/weixin/receiveMessage": {
       "get": {
         "tags": ["微信扫码登录"],
@@ -1111,6 +1149,22 @@
           }
         }
       },
+      "HpcCallbackRequest": {
+        "type": "object",
+        "required": ["ticket", "openid"],
+        "properties": {
+          "ticket": {
+            "type": "string",
+            "description": "会话 Ticket",
+            "example": "gQHq7zwAAAAAAAAAAS5odHRwOi8vd2VpeGluLnFxLmNvbS9xL01pQVJZUFUxNGlMWEV6RU5NMU52R1QAAgQY0WdlAwSAOgkA"
+          },
+          "openid": {
+            "type": "string",
+            "description": "微信用户 OpenID",
+            "example": "o1234567890abcdef"
+          }
+        }
+      },
       "ApiResponse": {
         "type": "object",
         "required": ["success"],
@@ -1165,10 +1219,11 @@
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["pending", "scanned", "confirmed", "expired"],
-            "description": "扫码状态：pending-等待用户扫码，scanned-已扫码等待确认，confirmed-登录成功，expired-二维码已过期",
+            "enum": ["pending", "scanned", "confirmed", "expired", "need_bind"],
+            "description": "扫码状态：pending-等待用户扫码，scanned-已扫码等待确认，confirmed-登录成功，expired-二维码已过期，need_bind-需要绑定手机号",
             "example": "pending"
           },
+          "openid": { "type": "string", "description": "微信 OpenID（need_bind 状态时返回）", "example": "o1234567890abcdef" },
           "user_id": { "type": "integer", "description": "用户 ID（登录成功时返回）", "example": 123 },
           "username": { "type": "string", "description": "用户名（登录成功时返回）", "example": "wechat_123" },
           "role": { "type": "integer", "description": "用户角色（登录成功时返回）", "example": 1 },
