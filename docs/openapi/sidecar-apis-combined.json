@@ -1,0 +1,1291 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "new-api Sidecar 接口文档整合",
+    "description": "new-api 项目 Sidecar 模式下新增的所有接口文档，包括：模型目录、模型推荐、微信扫码登录、微信支付/支付宝、手机号登录注册。",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api",
+      "description": "API 服务器（相对路径）"
+    }
+  ],
+  "tags": [
+    {
+      "name": "模型目录（公开）",
+      "description": "无需认证，面向普通用户展示模型聚合信息"
+    },
+    {
+      "name": "模型规格管理",
+      "description": "需管理员权限，维护模型规格元数据"
+    },
+    {
+      "name": "模型推荐",
+      "description": "公开接口，获取热门模型推荐列表"
+    },
+    {
+      "name": "微信扫码登录",
+      "description": "微信公众号扫码登录功能"
+    },
+    {
+      "name": "微信支付",
+      "description": "微信支付 Native 扫码充值"
+    },
+    {
+      "name": "支付宝",
+      "description": "支付宝电脑网站支付充值"
+    },
+    {
+      "name": "短信验证码",
+      "description": "短信验证码发送与验证"
+    },
+    {
+      "name": "用户登录注册",
+      "description": "手机号登录、注册相关接口"
+    },
+    {
+      "name": "用户绑定",
+      "description": "用户手机号绑定与换绑"
+    }
+  ],
+  "paths": {
+    "/model-catalog": {
+      "get": {
+        "summary": "获取全部模型目录",
+        "description": "返回全部模型的聚合数据（定价 + 规格），按 pricing 缓存中的模型列表展开。支持按提供商和能力标签过滤。",
+        "tags": ["模型目录（公开）"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "vendor",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "按提供商名称精确过滤",
+            "example": "OpenAI"
+          },
+          {
+            "name": "capabilities",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "按能力标签过滤，多个能力用逗号分隔（AND 关系，模型需同时满足所有指定能力）",
+            "example": "chat,vision,function"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/CatalogModel" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/model-catalog/{model_name}": {
+      "get": {
+        "summary": "获取单个模型聚合数据",
+        "description": "按模型名称查询聚合数据。若模型不在 pricing 缓存中，返回 not_found。",
+        "tags": ["模型目录（公开）"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "model_name",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "模型名称（需 URL 编码）",
+            "example": "gpt-4o"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "$ref": "#/components/schemas/CatalogModel" }
+                  }
+                }
+              }
+            }
+          },
+          "200-error": {
+            "description": "模型不存在（HTTP 仍为 200，success 为 false）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": false },
+                    "message": { "type": "string", "example": "common.not_found" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/model-catalog/admin/specs": {
+      "get": {
+        "summary": "分页查询模型规格列表",
+        "description": "支持按 model_name 模糊搜索。",
+        "tags": ["模型规格管理"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "按 model_name 模糊搜索关键词"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 1 },
+            "description": "页码"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 20 },
+            "description": "每页条数"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/ModelSpec" }
+                        },
+                        "total": { "type": "integer", "example": 100 },
+                        "page": { "type": "integer", "example": 1 },
+                        "page_size": { "type": "integer", "example": 20 }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "创建模型规格",
+        "description": "新建一条模型规格记录，model_name 全局唯一。",
+        "tags": ["模型规格管理"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ModelSpecCreate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "$ref": "#/components/schemas/ModelSpec" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "更新模型规格",
+        "description": "更新已有规格记录，必须携带 id。",
+        "tags": ["模型规格管理"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ModelSpecUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "$ref": "#/components/schemas/ModelSpec" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/model-catalog/admin/specs/{id}": {
+      "get": {
+        "summary": "获取单条模型规格",
+        "description": "按 ID 查询 ModelSpec 详情。",
+        "tags": ["模型规格管理"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "规格记录 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "$ref": "#/components/schemas/ModelSpec" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "删除模型规格",
+        "description": "软删除模型规格记录。",
+        "tags": ["模型规格管理"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "规格记录 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "type": "object", "nullable": true }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models/recommended": {
+      "get": {
+        "summary": "获取热门模型推荐列表",
+        "description": "返回运营配置的热门模型推荐列表，数据缓存 5 分钟。",
+        "tags": ["模型推荐"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/ModelRecommendation" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/weixin/getQrCode": {
+      "get": {
+        "tags": ["微信扫码登录"],
+        "summary": "获取微信登录二维码",
+        "description": "创建临时扫码会话，调用微信 API 生成二维码图片",
+        "operationId": "getWeChatQRCode",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "description": "类型（预留扩展，固定值 1）",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功返回二维码",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetQRCodeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误"
+          },
+          "500": {
+            "description": "服务器错误"
+          }
+        },
+        "security": []
+      }
+    },
+    "/weixin/checkQrCode": {
+      "post": {
+        "tags": ["微信扫码登录"],
+        "summary": "轮询扫码状态",
+        "description": "当用户扫码确认后返回用户信息并设置登录 Session",
+        "operationId": "checkWeChatQRCode",
+        "requestBody": {
+          "description": "轮询请求",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckQRCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "成功返回扫码状态",
+            "headers": {
+              "Set-Cookie": {
+                "description": "登录成功时设置 Session Cookie",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckQRCodeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误"
+          },
+          "404": {
+            "description": "Ticket 不存在"
+          }
+        },
+        "security": []
+      }
+    },
+    "/weixin/hpcCallback": {
+      "post": {
+        "tags": ["微信扫码登录"],
+        "summary": "接收 HPC 系统回调",
+        "description": "HPC 系统在用户扫码确认后调用此接口，传入 ticket、openid 和 token",
+        "parameters": [
+          {
+            "name": "API-TOKEN",
+            "in": "header",
+            "description": "HPC 回调验证 Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "回调请求",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HpcCallbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "400": {
+            "description": "参数错误或 Token 无效"
+          }
+        },
+        "security": []
+      }
+    },
+    "/weixin/receiveMessage": {
+      "get": {
+        "tags": ["微信扫码登录"],
+        "summary": "验证微信回调接口",
+        "description": "微信服务器验证接口有效性，返回 echostr",
+        "operationId": "verifyWeChatCallback",
+        "parameters": [
+          {
+            "name": "signature",
+            "in": "query",
+            "description": "微信签名",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "description": "时间戳",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nonce",
+            "in": "query",
+            "description": "随机数",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "echostr",
+            "in": "query",
+            "description": "随机字符串",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "返回 echostr",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      },
+      "post": {
+        "tags": ["微信扫码登录"],
+        "summary": "接收微信扫码事件",
+        "description": "微信服务器推送用户扫码事件通知",
+        "operationId": "receiveWeChatMessage",
+        "parameters": [
+          {
+            "name": "signature",
+            "in": "query",
+            "description": "微信签名",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "description": "时间戳",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nonce",
+            "in": "query",
+            "description": "随机数",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "XML 格式的事件通知",
+          "content": {
+            "application/xml": {
+              "schema": {
+                "$ref": "#/components/schemas/WeChatEventMessage"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "成功接收，返回 success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "success"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/wechat/qrcode/exchange": {
+      "post": {
+        "tags": ["微信扫码登录"],
+        "summary": "（旧版）通过 Code 换取登录",
+        "description": "旧版微信扫码登录方式，保留用于向后兼容",
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/user/wechatpay/pay": {
+      "post": {
+        "summary": "创建微信支付订单（Native 扫码）",
+        "description": "需要用户鉴权（UserAuth）；受 CriticalRateLimit 限制。创建订单后返回微信支付二维码链接（code_url），前端需自行渲染二维码供用户扫码支付。",
+        "tags": ["微信支付"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["amount"],
+                "properties": {
+                  "amount": {
+                    "type": "integer",
+                    "description": "充值数量。USD/CNY 模式下为金额；TOKENS 模式下为 token 数量，后端会自动换算为对应金额。"
+                  }
+                },
+                "example": { "amount": 100 }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "订单创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "code_url": { "type": "string", "description": "微信支付二维码链接（weixin:// 协议），需前端渲染为二维码" },
+                        "trade_no": { "type": "string", "description": "本地订单号，格式：WXP-{userId}-{timestamp}-{random}" },
+                        "amount": { "type": "number", "description": "实际支付金额（人民币，元）" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "200-error": {
+            "description": "业务错误（HTTP 仍为 200，message 为 error）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "error" },
+                    "data": { "type": "string", "description": "错误提示文案" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/wechatpay/notify": {
+      "post": {
+        "summary": "微信支付异步回调通知",
+        "description": "无需鉴权；由微信支付服务器主动推送。收到回调后校验签名并完成充值。",
+        "tags": ["微信支付"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "object",
+                "xml": { "name": "xml" },
+                "properties": {
+                  "return_code": { "type": "string", "description": "通信标识：SUCCESS / FAIL" },
+                  "return_msg": { "type": "string", "description": "通信错误信息" },
+                  "result_code": { "type": "string", "description": "业务结果：SUCCESS / FAIL" },
+                  "out_trade_no": { "type": "string", "description": "商户订单号（本地 trade_no）" },
+                  "transaction_id": { "type": "string", "description": "微信支付订单号" },
+                  "total_fee": { "type": "integer", "description": "订单金额（分）" },
+                  "time_end": { "type": "string", "description": "支付完成时间，格式 yyyyMMddHHmmss" },
+                  "sign": { "type": "string", "description": "微信支付签名" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "回调响应（必须返回 XML，否则微信会重试）",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "string",
+                  "example": "<xml><return_code><![CDATA[SUCCESS]]></return_code><return_msg><![CDATA[OK]]></return_msg></xml>"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/alipay/pay": {
+      "post": {
+        "summary": "创建支付宝支付订单（电脑网站支付）",
+        "description": "需要用户鉴权（UserAuth）；受 CriticalRateLimit 限制。创建订单后返回支付宝跳转链接，前端直接打开即可进入支付宝收银台。",
+        "tags": ["支付宝"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["amount"],
+                "properties": {
+                  "amount": {
+                    "type": "integer",
+                    "description": "充值数量。USD/CNY 模式下为金额；TOKENS 模式下为 token 数量，后端会自动换算为对应金额。"
+                  }
+                },
+                "example": { "amount": 100 }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "订单创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "pay_url": { "type": "string", "description": "支付宝电脑网站支付跳转链接，前端直接 window.open 即可" },
+                        "trade_no": { "type": "string", "description": "本地订单号，格式：ALI-{userId}-{timestamp}-{random}" },
+                        "amount": { "type": "number", "description": "实际支付金额（人民币，元）" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "200-error": {
+            "description": "业务错误（HTTP 仍为 200，message 为 error）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "error" },
+                    "data": { "type": "string", "description": "错误提示文案" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alipay/notify": {
+      "post": {
+        "summary": "支付宝异步回调通知",
+        "description": "无需鉴权；由支付宝服务器主动推送（POST 表单）。收到回调后校验签名并完成充值。",
+        "tags": ["支付宝"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "out_trade_no": { "type": "string", "description": "商户订单号（本地 trade_no）" },
+                  "trade_no": { "type": "string", "description": "支付宝交易号" },
+                  "trade_status": { "type": "string", "description": "交易状态：TRADE_SUCCESS / TRADE_FINISHED / WAIT_BUYER_PAY 等" },
+                  "total_amount": { "type": "string", "description": "订单金额（元）" },
+                  "sign": { "type": "string", "description": "支付宝签名" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "回调响应（必须返回纯文本 success / fail，否则支付宝会重试）",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "enum": ["success", "fail"],
+                  "example": "success"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alipay/return": {
+      "get": {
+        "summary": "支付宝同步返回",
+        "description": "无需鉴权；用户支付完成后支付宝会重定向到此地址。后端直接 302 跳转到充值历史页面。",
+        "tags": ["支付宝"],
+        "responses": {
+          "302": {
+            "description": "重定向到 /console/topup?show_history=true"
+          }
+        }
+      }
+    },
+    "/sms/send": {
+      "post": {
+        "summary": "发送短信验证码",
+        "description": "无需鉴权；单手机号 60 秒冷却，验证码 10 分钟有效",
+        "tags": ["短信验证码"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["phone", "type"],
+                "properties": {
+                  "phone": { "type": "string", "description": "手机号" },
+                  "type": { "type": "string", "description": "验证码用途：login / register / rebind" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/user/login/phone": {
+      "post": {
+        "summary": "手机号验证码登录",
+        "description": "无需鉴权；需要 Turnstile 验证码",
+        "tags": ["用户登录注册"],
+        "parameters": [
+          {
+            "name": "turnstile",
+            "in": "query",
+            "description": "Turnstile 验证令牌",
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["phone", "code"],
+                "properties": {
+                  "phone": { "type": "string", "description": "手机号" },
+                  "code": { "type": "string", "description": "短信验证码" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/user/register/phone": {
+      "post": {
+        "summary": "手机号验证码注册",
+        "description": "无需鉴权；需要 Turnstile 验证码",
+        "tags": ["用户登录注册"],
+        "parameters": [
+          {
+            "name": "turnstile",
+            "in": "query",
+            "description": "Turnstile 验证令牌",
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["phone", "code"],
+                "properties": {
+                  "phone": { "type": "string", "description": "手机号" },
+                  "code": { "type": "string", "description": "短信验证码" },
+                  "username": { "type": "string", "description": "自定义用户名（可选，3-20位字母/数字/下划线）" },
+                  "password": { "type": "string", "description": "密码（可选，默认随机生成）" },
+                  "aff_code": { "type": "string", "description": "邀请码" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/user/check-username": {
+      "get": {
+        "summary": "检查用户名是否已存在",
+        "description": "无需鉴权",
+        "tags": ["用户登录注册"],
+        "parameters": [
+          {
+            "name": "username",
+            "in": "query",
+            "required": true,
+            "description": "要检查的用户名",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "exists": { "type": "boolean", "description": "true 表示用户名已存在" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/phone/bind": {
+      "post": {
+        "summary": "绑定手机号",
+        "description": "需要登录（Session / AccessToken）",
+        "tags": ["用户绑定"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["phone", "code"],
+                "properties": {
+                  "phone": { "type": "string", "description": "手机号" },
+                  "code": { "type": "string", "description": "短信验证码" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    },
+    "/user/phone/rebind": {
+      "put": {
+        "summary": "换绑手机号",
+        "description": "需要登录（Session / AccessToken）；新手机号不能已被其他用户绑定",
+        "tags": ["用户绑定"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["phone", "code"],
+                "properties": {
+                  "phone": { "type": "string", "description": "新手机号" },
+                  "code": { "type": "string", "description": "新手机号的短信验证码" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CatalogModel": {
+        "type": "object",
+        "description": "公开接口返回的聚合模型对象，融合 pricing 与 model_spec 数据",
+        "properties": {
+          "model_name": { "type": "string", "example": "gpt-4o" },
+          "description": { "type": "string", "example": "OpenAI 最新旗舰模型，多模态能力强大" },
+          "vendor_id": { "type": "integer", "example": 1 },
+          "vendor_name": { "type": "string", "example": "OpenAI" },
+          "vendor_icon": { "type": "string", "example": "openai" },
+          "context_length": { "type": "integer", "example": 128000 },
+          "max_output_tokens": { "type": "integer", "example": 4096 },
+          "capabilities": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["chat", "function", "vision", "streaming"]
+          },
+          "model_ratio": { "type": "number", "example": 5 },
+          "completion_ratio": { "type": "number", "example": 15 },
+          "model_price": { "type": "number", "example": 0 },
+          "cache_ratio": { "type": "number", "nullable": true, "example": null },
+          "create_cache_ratio": { "type": "number", "nullable": true, "example": null },
+          "image_ratio": { "type": "number", "nullable": true, "example": null },
+          "audio_ratio": { "type": "number", "nullable": true, "example": null },
+          "audio_completion_ratio": { "type": "number", "nullable": true, "example": null },
+          "enable_groups": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["default", "vip"]
+          },
+          "tags": { "type": "string", "example": "multimodal,vision" },
+          "supported_endpoint_types": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["openai"]
+          },
+          "billing_mode": { "type": "string", "example": "" },
+          "billing_expr": { "type": "string", "example": "" },
+          "icon": { "type": "string", "example": "" },
+          "release_date": { "type": "string", "example": "2024-08-15" },
+          "knowledge_cutoff": { "type": "string", "example": "2024-08" },
+          "parameter_count": { "type": "string", "example": "" },
+          "input_price": { "type": "number", "example": 2.5, "description": "每百万 token 输入价格（USD）" },
+          "output_price": { "type": "number", "example": 10, "description": "每百万 token 输出价格（USD）" },
+          "status": { "type": "string", "example": "running", "description": "模型运行状态：running / degraded / down / unknown" },
+          "avg_latency_ms": { "type": "integer", "example": 320, "description": "过去 24 小时平均延迟（毫秒）" },
+          "success_rate": { "type": "number", "example": 98.5, "description": "过去 24 小时成功率（%）" },
+          "is_hot": { "type": "boolean", "example": true, "description": "是否为热门模型（请求量 Top 10）" },
+          "request_count": { "type": "integer", "example": 15234, "description": "过去 24 小时请求次数" }
+        }
+      },
+      "ModelSpec": {
+        "type": "object",
+        "description": "sidecar 私有模型规格记录",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "model_name": { "type": "string", "example": "gpt-4o" },
+          "context_length": { "type": "integer", "example": 128000 },
+          "max_output_tokens": { "type": "integer", "example": 4096 },
+          "capabilities": { "type": "string", "example": "[\"chat\",\"function\",\"vision\"]", "description": "JSON 数组字符串" },
+          "description": { "type": "string", "example": "OpenAI 最新旗舰模型" },
+          "icon": { "type": "string", "example": "openai" },
+          "release_date": { "type": "string", "example": "2024-08-15" },
+          "knowledge_cutoff": { "type": "string", "example": "2024-08" },
+          "parameter_count": { "type": "string", "example": "" },
+          "status": { "type": "integer", "example": 1, "description": "0=禁用，1=启用" },
+          "created_time": { "type": "integer", "example": 1710000000 },
+          "updated_time": { "type": "integer", "example": 1710000000 }
+        }
+      },
+      "ModelSpecCreate": {
+        "type": "object",
+        "required": ["model_name"],
+        "properties": {
+          "model_name": { "type": "string", "example": "gpt-4o" },
+          "context_length": { "type": "integer", "example": 128000 },
+          "max_output_tokens": { "type": "integer", "example": 4096 },
+          "capabilities": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["chat", "function", "vision"]
+          },
+          "description": { "type": "string", "example": "OpenAI 最新旗舰模型" },
+          "icon": { "type": "string", "example": "openai" },
+          "release_date": { "type": "string", "example": "2024-08-15" },
+          "knowledge_cutoff": { "type": "string", "example": "2024-08" },
+          "parameter_count": { "type": "string", "example": "" },
+          "status": { "type": "integer", "example": 1 }
+        }
+      },
+      "ModelSpecUpdate": {
+        "type": "object",
+        "required": ["id", "model_name"],
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "model_name": { "type": "string", "example": "gpt-4o" },
+          "context_length": { "type": "integer", "example": 128000 },
+          "max_output_tokens": { "type": "integer", "example": 4096 },
+          "capabilities": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["chat", "function", "vision"]
+          },
+          "description": { "type": "string", "example": "OpenAI 最新旗舰模型" },
+          "icon": { "type": "string", "example": "openai" },
+          "release_date": { "type": "string", "example": "2024-08-15" },
+          "knowledge_cutoff": { "type": "string", "example": "2024-08" },
+          "parameter_count": { "type": "string", "example": "" },
+          "status": { "type": "integer", "example": 1 }
+        }
+      },
+      "ModelRecommendation": {
+        "type": "object",
+        "description": "模型推荐列表项",
+        "properties": {
+          "model_name": { "type": "string", "example": "gpt-4o", "description": "模型名称" },
+          "display_name": { "type": "string", "example": "GPT-4o", "description": "显示名称" },
+          "description": { "type": "string", "example": "OpenAI 最新多模态模型", "description": "描述文案" },
+          "vendor_name": { "type": "string", "example": "OpenAI", "description": "提供商名称" },
+          "vendor_icon": { "type": "string", "example": "openai", "description": "提供商图标" },
+          "icon": { "type": "string", "example": "openai", "description": "模型图标" },
+          "order": { "type": "integer", "example": 1, "description": "排序权重，越小越靠前" }
+        }
+      },
+      "CheckQRCodeRequest": {
+        "type": "object",
+        "required": ["ticket"],
+        "properties": {
+          "ticket": {
+            "type": "string",
+            "format": "uuid",
+            "description": "会话 UUID",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          }
+        }
+      },
+      "HpcCallbackRequest": {
+        "type": "object",
+        "required": ["ticket", "openid"],
+        "properties": {
+          "ticket": {
+            "type": "string",
+            "description": "会话 Ticket",
+            "example": "gQHq7zwAAAAAAAAAAS5odHRwOi8vd2VpeGluLnFxLmNvbS9xL01pQVJZUFUxNGlMWEV6RU5NMU52R1QAAgQY0WdlAwSAOgkA"
+          },
+          "openid": {
+            "type": "string",
+            "description": "微信用户 OpenID",
+            "example": "o1234567890abcdef"
+          }
+        }
+      },
+      "ApiResponse": {
+        "type": "object",
+        "required": ["success"],
+        "properties": {
+          "success": { "type": "boolean", "description": "请求是否成功", "example": true },
+          "message": { "type": "string", "description": "响应消息（错误时返回）", "example": "OK" },
+          "data": { "description": "响应数据" }
+        }
+      },
+      "GetQRCodeResponse": {
+        "type": "object",
+        "allOf": [{ "$ref": "#/components/schemas/ApiResponse" }],
+        "properties": {
+          "data": { "$ref": "#/components/schemas/GetQRCodeData" }
+        }
+      },
+      "GetQRCodeData": {
+        "type": "object",
+        "required": ["ticket", "qrcode_url", "expires_in"],
+        "properties": {
+          "ticket": {
+            "type": "string",
+            "format": "uuid",
+            "description": "会话 UUID，用于后续轮询状态",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "qrcode_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "微信二维码图片 URL",
+            "example": "https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=gQHq7zwAAAAAAAAAAS5odHRwOi8vd2VpeGluLnFxLmNvbS9xL01pQVJZUFUxNGlMWEV6RU5NMU52R1QAAgQY0WdlAwSAOgkA"
+          },
+          "expires_in": {
+            "type": "integer",
+            "description": "二维码有效期（秒）",
+            "minimum": 1,
+            "maximum": 604800,
+            "example": 600
+          }
+        }
+      },
+      "CheckQRCodeResponse": {
+        "type": "object",
+        "allOf": [{ "$ref": "#/components/schemas/ApiResponse" }],
+        "properties": {
+          "data": { "$ref": "#/components/schemas/CheckQRCodeData" }
+        }
+      },
+      "CheckQRCodeData": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["pending", "scanned", "confirmed", "expired", "need_bind"],
+            "description": "扫码状态：pending-等待用户扫码，scanned-已扫码等待确认，confirmed-登录成功，expired-二维码已过期，need_bind-需要绑定手机号",
+            "example": "pending"
+          },
+          "openid": { "type": "string", "description": "微信 OpenID（need_bind 状态时返回）", "example": "o1234567890abcdef" },
+          "user_id": { "type": "integer", "description": "用户 ID（登录成功时返回）", "example": 123 },
+          "username": { "type": "string", "description": "用户名（登录成功时返回）", "example": "wechat_123" },
+          "role": { "type": "integer", "description": "用户角色（登录成功时返回）", "example": 1 },
+          "group": { "type": "string", "description": "用户分组（登录成功时返回）", "example": "default" }
+        }
+      },
+      "WeChatEventMessage": {
+        "type": "object",
+        "xml": { "name": "xml" },
+        "properties": {
+          "ToUserName": {
+            "type": "string",
+            "xml": { "cdata": true },
+            "description": "接收方微信号（公众号原始 ID）",
+            "example": "gh_123456789"
+          },
+          "FromUserName": {
+            "type": "string",
+            "xml": { "cdata": true },
+            "description": "发送方 OpenID",
+            "example": "o1234567890abcdef"
+          },
+          "CreateTime": {
+            "type": "integer",
+            "format": "int64",
+            "description": "消息创建时间戳",
+            "example": 1620000000
+          },
+          "MsgType": {
+            "type": "string",
+            "xml": { "cdata": true },
+            "description": "消息类型，固定为 event",
+            "example": "event"
+          },
+          "Event": {
+            "type": "string",
+            "xml": { "cdata": true },
+            "description": "事件类型，SCAN=已关注扫码，subscribe=未关注扫码",
+            "enum": ["SCAN", "subscribe", "unsubscribe", "CLICK", "VIEW"],
+            "example": "SCAN"
+          },
+          "EventKey": {
+            "type": "string",
+            "xml": { "cdata": true },
+            "description": "事件 Key：SCAN 事件为 scene_id；subscribe 事件为 qrscene_scene_id",
+            "example": "12345"
+          },
+          "Ticket": {
+            "type": "string",
+            "xml": { "cdata": true },
+            "description": "二维码 Ticket",
+            "example": "gQHq7zwAAAAAAAAAAS5odHRwOi8vd2VpeGluLnFxLmNvbS9xL01pQVJZUFUxNGlMWEV6RU5NMU52R1QAAgQY0WdlAwSAOgkA"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "在请求头中传入 Authorization: Bearer {access_token} 或使用 Session Cookie"
+      }
+    }
+  }
+}

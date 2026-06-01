@@ -6,8 +6,10 @@ class PluginRegistry {
     this.paymentGateways = new Map();
     // 自定义充值动作: type -> function
     this.topupActions = new Map();
-    // 设置页面组件列表
-    this.settingCards = [];
+    // 设置页面组件列表 - 用于支付配置页面
+    this.paymentSettingCards = [];
+    // 系统设置页面组件列表
+    this.systemSettingCards = [];
   }
 
   /**
@@ -37,11 +39,19 @@ class PluginRegistry {
   }
 
   /**
-   * 注册设置页面 Card 组件
+   * 注册支付设置页面 Card 组件
    * @param {React.ComponentType} component
    */
-  registerSettingCard(component) {
-    this.settingCards.push(component);
+  registerPaymentSettingCard(component) {
+    this.paymentSettingCards.push(component);
+  }
+
+  /**
+   * 注册系统设置页面 Card 组件
+   * @param {React.ComponentType} component
+   */
+  registerSystemSettingCard(component) {
+    this.systemSettingCards.push(component);
   }
 
   getPaymentGateway(type) {
@@ -56,8 +66,12 @@ class PluginRegistry {
     return this.topupActions.get(type);
   }
 
-  getAllSettingCards() {
-    return this.settingCards;
+  getAllPaymentSettingCards() {
+    return this.paymentSettingCards;
+  }
+
+  getAllSystemSettingCards() {
+    return this.systemSettingCards;
   }
 }
 

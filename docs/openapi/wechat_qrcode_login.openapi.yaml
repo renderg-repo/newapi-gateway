@@ -1,0 +1,316 @@
+openapi: 3.0.3
+info:
+  title: 微信扫码登录 API
+  description: |-
+    微信公众号扫码登录功能，通过直接调用微信公众号 API 实现，无需外部 WeChat Server 服务。
+
+    使用 Sidecar 模式实现，对主包代码侵入最小。
+  version: 1.0.0
+servers:
+  - url: /api
+    description: API 服务器
+
+tags:
+  - name: weixin
+    description: 微信扫码登录
+
+paths:
+  /weixin/getQrCode:
+    get:
+      tags:
+        - weixin
+      summary: 获取微信登录二维码
+      description: 创建临时扫码会话，调用微信 API 生成二维码图片
+      operationId: getWeChatQRCode
+      parameters:
+        - name: type
+          in: query
+          description: 类型（预留扩展，固定值 1）
+          required: false
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: 成功返回二维码
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetQRCodeResponse'
+        '400':
+          description: 参数错误
+        '500':
+          description: 服务器错误
+      security: []
+
+  /weixin/checkQrCode:
+    post:
+      tags:
+        - weixin
+      summary: 轮询扫码状态
+      description: 当用户扫码确认后返回用户信息并设置登录 Session
+      operationId: checkWeChatQRCode
+      requestBody:
+        description: 轮询请求
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckQRCodeRequest'
+        required: true
+      responses:
+        '200':
+          description: 成功返回扫码状态
+          headers:
+            Set-Cookie:
+              description: 登录成功时设置 Session Cookie
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckQRCodeResponse'
+        '400':
+          description: 参数错误
+        '404':
+          description: Ticket 不存在
+      security: []
+
+  /weixin/receiveMessage:
+    get:
+      tags:
+        - weixin
+      summary: 验证微信回调接口
+      description: 微信服务器验证接口有效性，返回 echostr
+      operationId: verifyWeChatCallback
+      parameters:
+        - name: signature
+          in: query
+          description: 微信签名
+          required: true
+          schema:
+            type: string
+        - name: timestamp
+          in: query
+          description: 时间戳
+          required: true
+          schema:
+            type: string
+        - name: nonce
+          in: query
+          description: 随机数
+          required: true
+          schema:
+            type: string
+        - name: echostr
+          in: query
+          description: 随机字符串
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 返回 echostr
+          content:
+            text/plain:
+              schema:
+                type: string
+      security: []
+    post:
+      tags:
+        - weixin
+      summary: 接收微信扫码事件
+      description: 微信服务器推送用户扫码事件通知
+      operationId: receiveWeChatMessage
+      parameters:
+        - name: signature
+          in: query
+          description: 微信签名
+          required: true
+          schema:
+            type: string
+        - name: timestamp
+          in: query
+          description: 时间戳
+          required: true
+          schema:
+            type: string
+        - name: nonce
+          in: query
+          description: 随机数
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: XML 格式的事件通知
+        content:
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/WeChatEventMessage'
+        required: true
+      responses:
+        '200':
+          description: 成功接收，返回 success
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: success
+      security: []
+
+components:
+  schemas:
+    # Request schemas
+    CheckQRCodeRequest:
+      type: object
+      required:
+        - ticket
+      properties:
+        ticket:
+          type: string
+          format: uuid
+          description: 会话 UUID
+          example: 550e8400-e29b-41d4-a716-446655440000
+
+    # Response schemas
+    GetQRCodeResponse:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/GetQRCodeData'
+
+    GetQRCodeData:
+      type: object
+      required:
+        - ticket
+        - qrcode_url
+        - expires_in
+      properties:
+        ticket:
+          type: string
+          format: uuid
+          description: 会话 UUID，用于后续轮询状态
+          example: 550e8400-e29b-41d4-a716-446655440000
+        qrcode_url:
+          type: string
+          format: uri
+          description: 微信二维码图片 URL
+          example: https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=gQHq7zwAAAAAAAAAAS5odHRwOi8vd2VpeGluLnFxLmNvbS9xL01pQVJZUFUxNGlMWEV6RU5NMU52R1QAAgQY0WdlAwSAOgkA
+        expires_in:
+          type: integer
+          description: 二维码有效期（秒）
+          minimum: 1
+          maximum: 604800
+          example: 600
+
+    CheckQRCodeResponse:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/CheckQRCodeData'
+
+    CheckQRCodeData:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [pending, scanned, confirmed, expired]
+          description: |-
+            扫码状态：
+            * pending - 等待用户扫码
+            * scanned - 已扫码，等待确认
+            * confirmed - 登录成功
+            * expired - 二维码已过期
+          example: pending
+        user_id:
+          type: integer
+          description: 用户 ID（登录成功时返回）
+          example: 123
+        username:
+          type: string
+          description: 用户名（登录成功时返回）
+          example: wechat_123
+        role:
+          type: integer
+          description: 用户角色（登录成功时返回）
+          example: 1
+        group:
+          type: string
+          description: 用户分组（登录成功时返回）
+          example: default
+
+    # WeChat message schemas
+    WeChatEventMessage:
+      type: object
+      xml:
+        name: xml
+      properties:
+        ToUserName:
+          type: string
+          xml:
+            cdata: true
+          description: 接收方微信号（公众号原始 ID）
+          example: gh_123456789
+        FromUserName:
+          type: string
+          xml:
+            cdata: true
+          description: 发送方 OpenID
+          example: o1234567890abcdef
+        CreateTime:
+          type: integer
+          format: int64
+          description: 消息创建时间戳
+          example: 1620000000
+        MsgType:
+          type: string
+          xml:
+            cdata: true
+          description: 消息类型，固定为 event
+          example: event
+        Event:
+          type: string
+          xml:
+            cdata: true
+          description: 事件类型，SCAN=已关注扫码，subscribe=未关注扫码
+          enum: [SCAN, subscribe, unsubscribe, CLICK, VIEW]
+          example: SCAN
+        EventKey:
+          type: string
+          xml:
+            cdata: true
+          description: |-
+            事件 Key：
+            * SCAN 事件：scene_id
+            * subscribe 事件：qrscene_scene_id
+          example: 12345
+        Ticket:
+          type: string
+          xml:
+            cdata: true
+          description: 二维码 Ticket
+          example: gQHq7zwAAAAAAAAAAS5odHRwOi8vd2VpeGluLnFxLmNvbS9xL01pQVJZUFUxNGlMWEV6RU5NMU52R1QAAgQY0WdlAwSAOgkA
+
+    # Common schemas
+    ApiResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          description: 请求是否成功
+          example: true
+        message:
+          type: string
+          description: 响应消息（错误时返回）
+          example: OK
+        data:
+          description: 响应数据
