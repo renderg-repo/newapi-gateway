@@ -145,19 +145,15 @@ func PhoneRegister(c *gin.Context) {
 
 	username := req.Username
 	if username == "" {
-		username = "phone_" + req.Phone
+		username = req.Phone
 	} else if !validateUsername(username) {
 		common.ApiErrorI18n(c, i18n.MsgUserInvalidUsernameFormat)
 		return
 	}
 	exist, _ := model.CheckUserExistOrDeleted(username, "")
-	for exist {
-		if req.Username != "" {
-			common.ApiErrorI18n(c, i18n.MsgUserExists)
-			return
-		}
-		username = "phone_" + req.Phone + "_" + common.GetRandomString(4)
-		exist, _ = model.CheckUserExistOrDeleted(username, "")
+	if exist {
+		common.ApiErrorI18n(c, i18n.MsgUserExists)
+		return
 	}
 
 	password := req.Password
