@@ -27,6 +27,7 @@ type checkQRCodeRequest struct {
 
 type checkQRCodeResponse struct {
 	Status   string `json:"status"`
+	OpenID   string `json:"openid,omitempty"`
 	UserID   int    `json:"user_id,omitempty"`
 	Username string `json:"username,omitempty"`
 	Role     int    `json:"role,omitempty"`
@@ -159,6 +160,7 @@ func CheckQRCode(c *gin.Context) {
 		} else {
 			// OpenID not bound to any user, return need_bind status
 			resp.Status = "need_bind"
+			resp.OpenID = session.OpenID
 		}
 	}
 
@@ -168,7 +170,6 @@ func CheckQRCode(c *gin.Context) {
 type hpcCallbackRequest struct {
 	Ticket string `json:"ticket" binding:"required"`
 	Openid string `json:"openid" binding:"required"`
-	Token  string `json:"token" binding:"required"`
 }
 
 // HpcCallback receives callback from HPC system with WeChat openid.
@@ -184,8 +185,9 @@ func HpcCallback(c *gin.Context) {
 		return
 	}
 
-	// Verify token
-	if req.Token != common.WeChatHpcCallbackToken {
+	// Verify token from header
+	token := c.GetHeader("API-TOKEN")
+	if token != common.WeChatHpcCallbackToken {
 		common.SysLog(fmt.Sprintf("Invalid HPC callback token from %s", c.ClientIP()))
 		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
 		return

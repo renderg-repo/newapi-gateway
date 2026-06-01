@@ -182,6 +182,7 @@ func InitOptionMap() {
 	common.OptionMap["SmsSignName"] = ""
 	common.OptionMap["SmsTemplateCode"] = ""
 	common.OptionMap["SmsTemplateVar"] = "code"
+	common.OptionMap["CaptchaEnabled"] = strconv.FormatBool(false)
 	//common.OptionMap["ChatLink"] = common.ChatLink
 	//common.OptionMap["ChatLink2"] = common.ChatLink2
 	common.OptionMap["QuotaPerUnit"] = strconv.FormatFloat(common.QuotaPerUnit, 'f', -1, 64)
@@ -360,6 +361,8 @@ func updateOptionMap(key string, value string) (err error) {
 			ratio_setting.SetExposeRatioEnabled(boolValue)
 		case "SmsEnabled":
 			common.SMSEnabled = boolValue
+		case "CaptchaEnabled":
+			// 存储在 OptionMap 中直接读取
 		}
 	}
 	switch key {
