@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"time"
 
@@ -21,15 +22,15 @@ import (
 const PaymentMethodAlipay = "alipay_page"
 
 type AlipayRequest struct {
-	Amount int64 `json:"amount" binding:"required"`
+	Amount float64 `json:"amount" binding:"required"`
 }
 
-func getAlipayMinTopup() int64 {
+func getAlipayMinTopup() float64 {
 	minTopup := setting.AlipayMinTopUp
 	if operation_setting.GetQuotaDisplayType() == operation_setting.QuotaDisplayTypeTokens {
-		minTopup = minTopup * int(common.QuotaPerUnit)
+		return float64(minTopup) * common.QuotaPerUnit
 	}
-	return int64(minTopup)
+	return float64(minTopup)
 }
 
 func getAlipayMoney(amount float64, group string) float64 {
@@ -63,8 +64,8 @@ func RequestAlipay(c *gin.Context) {
 	}
 
 	minTopup := getAlipayMinTopup()
-	if req.Amount < minTopup {
-		c.JSON(200, gin.H{"message": "error", "data": fmt.Sprintf("充值数量不能小于 %d", minTopup)})
+	if req.Amount < minTopup-0.0001 {
+		c.JSON(200, gin.H{"message": "error", "data": fmt.Sprintf("充值数量不能小于 %.2f", minTopup)})
 		return
 	}
 
@@ -75,19 +76,22 @@ func RequestAlipay(c *gin.Context) {
 		return
 	}
 
-	payMoney := getAlipayMoney(float64(req.Amount), group)
+	payMoney := getAlipayMoney(req.Amount, group)
 	if payMoney < 0.01 {
 		c.JSON(200, gin.H{"message": "error", "data": "充值金额过低"})
 		return
 	}
 
 	// Token 模式下归一化 Amount
-	amount := req.Amount
+	var amount int64
 	if operation_setting.GetQuotaDisplayType() == operation_setting.QuotaDisplayTypeTokens {
-		amount = int64(float64(req.Amount) / common.QuotaPerUnit)
-		if amount < 1 {
-			amount = 1
+		amountFloat := req.Amount / common.QuotaPerUnit
+		if amountFloat < 1 {
+			amountFloat = 1
 		}
+		amount = int64(math.Round(amountFloat))
+	} else {
+		amount = int64(math.Round(req.Amount))
 	}
 
 	tradeNo := fmt.Sprintf("ALI-%d-%d-%s", id, time.Now().UnixMilli(), randstr.String(6))
