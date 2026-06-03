@@ -115,7 +115,7 @@ func RequestAlipay(c *gin.Context) {
 
 	callBackAddress := service.GetCallbackAddress()
 	notifyUrl := callBackAddress + "/api/alipay/notify"
-	returnUrl := system_setting.ServerAddress + "/console/topup?show_history=true"
+	returnUrl := system_setting.ServerAddress + "/dashboard/billing"
 
 	payUrl, err := sidecarService.CreatePageOrder(tradeNo, payMoney, "AI额度充值", returnUrl, notifyUrl)
 	if err != nil {
