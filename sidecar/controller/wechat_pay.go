@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/i18n"
 	mainController "github.com/QuantumNous/new-api/controller"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/service"
@@ -55,32 +56,32 @@ func getWechatPayMoney(amount float64, group string) int64 {
 
 func RequestWechatPay(c *gin.Context) {
 	if !setting.WechatPayEnabled {
-		c.JSON(200, gin.H{"message": "error", "data": "微信支付未启用"})
+		common.ApiErrorI18n(c, i18n.MsgPaymentWechatNotEnabled)
 		return
 	}
 
 	var req WechatPayRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(200, gin.H{"message": "error", "data": "参数错误"})
+		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
 		return
 	}
 
 	minTopup := getWechatPayMinTopup()
 	if req.Amount < minTopup {
-		c.JSON(200, gin.H{"message": "error", "data": fmt.Sprintf("充值数量不能小于 %d", minTopup)})
+		common.ApiErrorI18n(c, i18n.MsgPaymentAmountBelowMin, gin.H{"Min": fmt.Sprintf("%d", minTopup)})
 		return
 	}
 
 	id := c.GetInt("id")
 	group, err := model.GetUserGroup(id, true)
 	if err != nil {
-		c.JSON(200, gin.H{"message": "error", "data": "获取用户分组失败"})
+		common.ApiErrorI18n(c, i18n.MsgPaymentGetUserGroupError)
 		return
 	}
 
 	payMoneyFen := getWechatPayMoney(float64(req.Amount), group)
 	if payMoneyFen < 1 {
-		c.JSON(200, gin.H{"message": "error", "data": "充值金额过低"})
+		common.ApiErrorI18n(c, i18n.MsgPaymentAmountTooLow)
 		return
 	}
 
@@ -107,7 +108,7 @@ func RequestWechatPay(c *gin.Context) {
 	}
 	if err := topUp.Insert(); err != nil {
 		log.Printf("微信支付创建本地订单失败: %v", err)
-		c.JSON(200, gin.H{"message": "error", "data": "创建订单失败"})
+		common.ApiErrorI18n(c, i18n.MsgPaymentCreateFailed)
 		return
 	}
 
@@ -119,7 +120,7 @@ func RequestWechatPay(c *gin.Context) {
 		log.Printf("微信支付统一下单失败: %v", err)
 		topUp.Status = common.TopUpStatusFailed
 		_ = topUp.Update()
-		c.JSON(200, gin.H{"message": "error", "data": "拉起支付失败"})
+		common.ApiErrorI18n(c, i18n.MsgPaymentStartFailed)
 		return
 	}
 

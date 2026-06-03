@@ -9,6 +9,7 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	mainController "github.com/QuantumNous/new-api/controller"
+	"github.com/QuantumNous/new-api/i18n"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting"
@@ -53,32 +54,32 @@ func getAlipayMoney(amount float64, group string) float64 {
 
 func RequestAlipay(c *gin.Context) {
 	if !setting.AlipayEnabled {
-		c.JSON(200, gin.H{"message": "error", "data": "支付宝未启用"})
+		common.ApiErrorI18n(c, i18n.MsgPaymentAlipayNotEnabled)
 		return
 	}
 
 	var req AlipayRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(200, gin.H{"message": "error", "data": "参数错误"})
+		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
 		return
 	}
 
 	minTopup := getAlipayMinTopup()
 	if req.Amount < minTopup-0.0001 {
-		c.JSON(200, gin.H{"message": "error", "data": fmt.Sprintf("充值数量不能小于 %.2f", minTopup)})
+		common.ApiErrorI18n(c, i18n.MsgPaymentAmountBelowMin, gin.H{"Min": fmt.Sprintf("%.2f", minTopup)})
 		return
 	}
 
 	id := c.GetInt("id")
 	group, err := model.GetUserGroup(id, true)
 	if err != nil {
-		c.JSON(200, gin.H{"message": "error", "data": "获取用户分组失败"})
+		common.ApiErrorI18n(c, i18n.MsgPaymentGetUserGroupError)
 		return
 	}
 
 	payMoney := getAlipayMoney(req.Amount, group)
 	if payMoney < 0.01 {
-		c.JSON(200, gin.H{"message": "error", "data": "充值金额过低"})
+		common.ApiErrorI18n(c, i18n.MsgPaymentAmountTooLow)
 		return
 	}
 
@@ -108,20 +109,20 @@ func RequestAlipay(c *gin.Context) {
 	}
 	if err := topUp.Insert(); err != nil {
 		log.Printf("支付宝创建本地订单失败: %v", err)
-		c.JSON(200, gin.H{"message": "error", "data": "创建订单失败"})
+		common.ApiErrorI18n(c, i18n.MsgPaymentCreateFailed)
 		return
 	}
 
 	callBackAddress := service.GetCallbackAddress()
 	notifyUrl := callBackAddress + "/api/alipay/notify"
-	returnUrl := system_setting.ServerAddress + "/console/topup?show_history=true"
+	returnUrl := system_setting.ServerAddress + "/dashboard/billing"
 
 	payUrl, err := sidecarService.CreatePageOrder(tradeNo, payMoney, "AI额度充值", returnUrl, notifyUrl)
 	if err != nil {
 		log.Printf("支付宝创建订单失败: %v", err)
 		topUp.Status = common.TopUpStatusFailed
 		_ = topUp.Update()
-		c.JSON(200, gin.H{"message": "error", "data": "拉起支付失败"})
+		common.ApiErrorI18n(c, i18n.MsgPaymentStartFailed)
 		return
 	}
 
