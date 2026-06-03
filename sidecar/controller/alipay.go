@@ -204,5 +204,5 @@ func AlipayNotify(c *gin.Context) {
 
 func AlipayReturn(c *gin.Context) {
 	// 支付宝同步返回，仅做页面跳转
-	c.Redirect(http.StatusFound, system_setting.ServerAddress+"/console/topup?show_history=true")
+	c.Redirect(http.StatusFound, system_setting.ServerAddress+"/dashboard/billing")
 }
