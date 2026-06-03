@@ -147,16 +147,20 @@ const (
 
 // Payment related messages
 const (
-	MsgPaymentNotConfigured    = "payment.not_configured"
-	MsgPaymentMethodNotExists  = "payment.method_not_exists"
-	MsgPaymentCallbackError    = "payment.callback_error"
-	MsgPaymentCreateFailed     = "payment.create_failed"
-	MsgPaymentStartFailed      = "payment.start_failed"
-	MsgPaymentAmountTooLow     = "payment.amount_too_low"
-	MsgPaymentStripeNotConfig  = "payment.stripe_not_configured"
-	MsgPaymentWebhookNotConfig = "payment.webhook_not_configured"
-	MsgPaymentPriceIdNotConfig = "payment.price_id_not_configured"
-	MsgPaymentCreemNotConfig   = "payment.creem_not_configured"
+	MsgPaymentNotConfigured     = "payment.not_configured"
+	MsgPaymentMethodNotExists   = "payment.method_not_exists"
+	MsgPaymentCallbackError     = "payment.callback_error"
+	MsgPaymentCreateFailed      = "payment.create_failed"
+	MsgPaymentStartFailed       = "payment.start_failed"
+	MsgPaymentAmountTooLow      = "payment.amount_too_low"
+	MsgPaymentStripeNotConfig   = "payment.stripe_not_configured"
+	MsgPaymentWebhookNotConfig  = "payment.webhook_not_configured"
+	MsgPaymentPriceIdNotConfig  = "payment.price_id_not_configured"
+	MsgPaymentCreemNotConfig    = "payment.creem_not_configured"
+	MsgPaymentAlipayNotEnabled  = "payment.alipay_not_enabled"
+	MsgPaymentWechatNotEnabled  = "payment.wechat_not_enabled"
+	MsgPaymentGetUserGroupError = "payment.get_user_group_error"
+	MsgPaymentAmountBelowMin    = "payment.amount_below_min"
 )
 
 // Topup related messages

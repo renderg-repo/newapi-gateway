@@ -137,6 +137,10 @@ payment.stripe_not_configured: "Stripe 未配置或密钥无效"
 payment.webhook_not_configured: "Webhook 未配置"
 payment.price_id_not_configured: "该套餐未配置 StripePriceId"
 payment.creem_not_configured: "该套餐未配置 CreemProductId"
+payment.alipay_not_enabled: "支付宝未启用"
+payment.wechat_not_enabled: "微信支付未启用"
+payment.get_user_group_error: "获取用户分组失败"
+payment.amount_below_min: "充值数量不能小于 {{.Min}}"
 
 # Topup messages
 topup.not_provided: "未提供支付单号"

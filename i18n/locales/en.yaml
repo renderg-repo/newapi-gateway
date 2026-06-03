@@ -136,6 +136,10 @@ payment.stripe_not_configured: "Stripe is not configured or key is invalid"
 payment.webhook_not_configured: "Webhook is not configured"
 payment.price_id_not_configured: "StripePriceId is not configured for this plan"
 payment.creem_not_configured: "CreemProductId is not configured for this plan"
+payment.alipay_not_enabled: "Alipay is not enabled"
+payment.wechat_not_enabled: "WeChat Pay is not enabled"
+payment.get_user_group_error: "Failed to get user group"
+payment.amount_below_min: "Topup amount cannot be less than {{.Min}}"
 
 # Topup messages
 topup.not_provided: "Payment order number not provided"
