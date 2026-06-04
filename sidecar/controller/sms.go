@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/i18n"
+	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/sidecar/service"
 	"github.com/gin-gonic/gin"
 )
@@ -37,10 +38,21 @@ func SendSMSCode(c *gin.Context) {
 		}
 	}
 
-	// rate limit: same phone 60s
-	if !service.CanSendToPhone(req.Phone) {
-		common.ApiErrorI18n(c, i18n.MsgTooManyRequests)
-		return
+	// check user existence based on type
+	phoneExists := model.IsPhoneAlreadyTaken(req.Phone)
+	switch req.Type {
+	case "login":
+		if !phoneExists {
+			common.ApiErrorI18n(c, i18n.MsgUserNotExists)
+			return
+		}
+	case "register":
+		if phoneExists {
+			common.ApiErrorI18n(c, i18n.MsgUserExists)
+			return
+		}
+	case "rebind":
+		// rebind doesn't need check here, will check in bind handler
 	}
 
 	// generate 6-digit numeric code

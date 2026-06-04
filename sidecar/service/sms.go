@@ -3,8 +3,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"sync"
-	"time"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/dysmsapi"
@@ -13,10 +11,6 @@ import (
 type SMSProvider interface {
 	Send(phone string, code string) error
 }
-
-var (
-	sendRecord sync.Map // phone -> lastSendTime
-)
 
 func getProvider() SMSProvider {
 	if !common.SMSEnabled {
@@ -34,25 +28,12 @@ func getProvider() SMSProvider {
 	}
 }
 
-func CanSendToPhone(phone string) bool {
-	if last, ok := sendRecord.Load(phone); ok {
-		if time.Since(last.(time.Time)) < 60*time.Second {
-			return false
-		}
-	}
-	return true
-}
-
 func SendSMS(phone string, code string) error {
 	p := getProvider()
 	if p == nil {
 		return errors.New("sms provider not configured")
 	}
-	if err := p.Send(phone, code); err != nil {
-		return err
-	}
-	sendRecord.Store(phone, time.Now())
-	return nil
+	return p.Send(phone, code)
 }
 
 // AliyunSMSProvider implements SMSProvider for Alibaba Cloud SMS.
