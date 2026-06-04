@@ -9,8 +9,10 @@ import (
 )
 
 type SendSMSRequest struct {
-	Phone string `json:"phone" binding:"required"`
-	Type  string `json:"type" binding:"required,oneof=login register rebind"`
+	Phone       string `json:"phone" binding:"required"`
+	Type        string `json:"type" binding:"required,oneof=login register rebind"`
+	CaptchaId   string `json:"captcha_id"`
+	CaptchaCode string `json:"captcha_code"`
 }
 
 func SendSMSCode(c *gin.Context) {
@@ -23,6 +25,17 @@ func SendSMSCode(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
 		return
+	}
+
+	if captchaEnabled := common.OptionMap["CaptchaEnabled"]; captchaEnabled == "true" {
+		if req.CaptchaId == "" || req.CaptchaCode == "" {
+			common.ApiErrorI18n(c, i18n.MsgInvalidParams)
+			return
+		}
+		if !service.VerifyCaptchaAuto(req.CaptchaId, req.CaptchaCode) {
+			common.ApiErrorI18n(c, i18n.MsgUserVerificationCodeError)
+			return
+		}
 	}
 
 	// check user existence based on type

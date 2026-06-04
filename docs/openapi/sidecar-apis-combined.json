@@ -2,8 +2,8 @@
   "openapi": "3.0.3",
   "info": {
     "title": "new-api Sidecar 接口文档整合",
-    "description": "new-api 项目 Sidecar 模式下新增的所有接口文档，包括：模型目录、模型推荐、微信扫码登录、微信支付/支付宝、手机号登录注册。",
-    "version": "1.0.0"
+    "description": "new-api 项目 Sidecar 模式下新增的所有接口文档，包括：模型目录、模型推荐、微信扫码登录、微信支付/支付宝、手机号登录注册、图形验证码。",
+    "version": "1.1.0"
   },
   "servers": [
     {
@@ -47,6 +47,10 @@
     {
       "name": "用户绑定",
       "description": "用户手机号绑定与换绑"
+    },
+    {
+      "name": "图形验证码",
+      "description": "图形验证码生成与验证，用于防刷保护"
     }
   ],
   "paths": {
@@ -823,10 +827,94 @@
         }
       }
     },
+    "/captcha/get": {
+      "get": {
+        "summary": "获取图形验证码",
+        "description": "无需鉴权；生成 4 位数字验证码，返回验证码 ID 和 base64 编码的图片",
+        "tags": ["图形验证码"],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "description": "验证码类型（预留扩展）",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "digit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功返回验证码",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "captcha_id": { "type": "string", "description": "验证码 ID，用于后续验证", "example": "Oz0Q66MFYTC8CVvzrODd" },
+                        "image_data": { "type": "string", "description": "base64 编码的 PNG 图片，可直接用于 img 标签的 src", "example": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA..." }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/captcha/verify": {
+      "post": {
+        "summary": "验证图形验证码",
+        "description": "无需鉴权；验证用户输入的验证码是否正确",
+        "tags": ["图形验证码"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["captcha_id", "captcha_code"],
+                "properties": {
+                  "captcha_id": { "type": "string", "description": "验证码 ID" },
+                  "captcha_code": { "type": "string", "description": "用户输入的验证码" }
+                },
+                "example": {
+                  "captcha_id": "Oz0Q66MFYTC8CVvzrODd",
+                  "captcha_code": "1234"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "验证结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "description": "验证是否通过", "example": true },
+                    "data": { "type": "object", "properties": { "valid": { "type": "boolean", "example": true } } },
+                    "message": { "type": "string", "example": "success" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/sms/send": {
       "post": {
         "summary": "发送短信验证码",
-        "description": "无需鉴权；单手机号 60 秒冷却，验证码 10 分钟有效",
+        "description": "无需鉴权；单手机号 60 秒冷却，验证码 10 分钟有效。当 CaptchaEnabled 配置项为 true 时，必须先传入图形验证码",
         "tags": ["短信验证码"],
         "requestBody": {
           "content": {
@@ -836,7 +924,9 @@
                 "required": ["phone", "type"],
                 "properties": {
                   "phone": { "type": "string", "description": "手机号" },
-                  "type": { "type": "string", "description": "验证码用途：login / register / rebind" }
+                  "type": { "type": "string", "description": "验证码用途：login / register / rebind" },
+                  "captcha_id": { "type": "string", "description": "图形验证码 ID（当 CaptchaEnabled=true 时必填）" },
+                  "captcha_code": { "type": "string", "description": "图形验证码（当 CaptchaEnabled=true 时必填）" }
                 }
               }
             }

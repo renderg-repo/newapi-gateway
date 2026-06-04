@@ -402,5 +402,8 @@ func SetApiRouter(router *gin.Engine) {
 
 		// Sidecar: WeChat QR code scan login routes
 		sidecarRouter.RegisterWeChatQRCodeRoutes(apiRouter)
+
+		// Sidecar: Captcha routes
+		sidecarRouter.RegisterCaptchaRoutes(apiRouter)
 	}
 }
