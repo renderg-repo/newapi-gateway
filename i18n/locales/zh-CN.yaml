@@ -23,6 +23,8 @@ common.delete_failed: "删除失败"
 common.already_exists: "已存在"
 common.name_cannot_be_empty: "名称不能为空"
 common.batch_too_many: "批量请求数量过多，最多 {{.Max}} 条"
+common.too_many_requests: "请求过于频繁，请稍后再试"
+common.sms_send_failed: "短信发送失败，请稍后重试"
 
 # Auth middleware messages
 auth.not_logged_in: "无权进行此操作，未登录且未提供 access token"
