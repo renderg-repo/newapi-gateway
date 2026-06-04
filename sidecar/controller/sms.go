@@ -42,12 +42,6 @@ func SendSMSCode(c *gin.Context) {
 		// rebind doesn't need check here, will check in bind handler
 	}
 
-	// rate limit: same phone 60s
-	if !service.CanSendToPhone(req.Phone) {
-		common.ApiErrorI18n(c, i18n.MsgTooManyRequests)
-		return
-	}
-
 	// generate 6-digit numeric code
 	code := common.GenerateNumericVerificationCode(6)
 	common.RegisterVerificationCodeWithKey(req.Phone, code, common.SMSVerificationPurpose)
