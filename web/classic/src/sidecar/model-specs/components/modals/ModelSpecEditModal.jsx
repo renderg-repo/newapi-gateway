@@ -100,7 +100,8 @@ const ModelSpecEditModal = ({
     const submitData = {
       ...values,
       id: isEdit ? editingSpec.id : undefined,
-      capabilities: serializeCapabilities(values.capabilities),
+      // 后端 ShouldBindJSON 期望 []string，直接传数组
+      capabilities: values.capabilities || [],
       status: values.status ? 1 : 0,
     };
     onOk(submitData, isEdit);
