@@ -12,24 +12,40 @@ func SetDB(db *gorm.DB) {
 }
 
 func Migrate() error {
-	return DB.AutoMigrate(&ModelSpec{})
+	if err := DB.AutoMigrate(&ModelSpec{}); err != nil {
+		return err
+	}
+	// 如果 model_name 字段缺失（之前迁移被误删），重新添加
+	if !DB.Migrator().HasColumn(&ModelSpec{}, "model_name") {
+		if err := DB.Migrator().AddColumn(&ModelSpec{}, "model_name"); err != nil {
+			common.SysLog("failed to add model_name column: " + err.Error())
+		}
+	}
+	// 移除已废弃的字段和逻辑删除列
+	for _, col := range []string{"description", "icon", "deleted_at"} {
+		if DB.Migrator().HasColumn(&ModelSpec{}, col) {
+			_ = DB.Migrator().DropColumn(&ModelSpec{}, col)
+		}
+	}
+	// 移除旧的复合唯一索引
+	if DB.Migrator().HasIndex(&ModelSpec{}, "uk_model_spec_name_delete_at") {
+		_ = DB.Migrator().DropIndex(&ModelSpec{}, "uk_model_spec_name_delete_at")
+	}
+	return nil
 }
 
 type ModelSpec struct {
-	Id              int            `json:"id"`
-	ModelName       string         `json:"model_name" gorm:"size:128;not null;uniqueIndex:uk_model_spec_name_delete_at,priority:1"`
-	ContextLength   int            `json:"context_length"`
-	MaxOutputTokens int            `json:"max_output_tokens"`
-	Capabilities    string         `json:"capabilities,omitempty" gorm:"type:text"`
-	Description     string         `json:"description,omitempty" gorm:"type:text"`
-	Icon            string         `json:"icon,omitempty" gorm:"size:varchar(128)"`
-	ReleaseDate     string         `json:"release_date,omitempty" gorm:"size:32"`
-	KnowledgeCutoff string         `json:"knowledge_cutoff,omitempty" gorm:"size:32"`
-	ParameterCount  string         `json:"parameter_count,omitempty" gorm:"size:32"`
-	Status          int            `json:"status" gorm:"default:1"`
-	CreatedTime     int64          `json:"created_time" gorm:"bigint"`
-	UpdatedTime     int64          `json:"updated_time" gorm:"bigint"`
-	DeletedAt       gorm.DeletedAt `json:"-" gorm:"index;uniqueIndex:uk_model_spec_name_delete_at,priority:2"`
+	Id              int    `json:"id"`
+	ModelName       string `json:"model_name" gorm:"size:128;uniqueIndex"`
+	ContextLength   int    `json:"context_length"`
+	MaxOutputTokens int    `json:"max_output_tokens"`
+	Capabilities    string `json:"capabilities,omitempty" gorm:"type:text"`
+	ReleaseDate     string `json:"release_date,omitempty" gorm:"size:32"`
+	KnowledgeCutoff string `json:"knowledge_cutoff,omitempty" gorm:"size:32"`
+	ParameterCount  string `json:"parameter_count,omitempty" gorm:"size:32"`
+	Status          int    `json:"status" gorm:"default:1"`
+	CreatedTime     int64  `json:"created_time" gorm:"bigint"`
+	UpdatedTime     int64  `json:"updated_time" gorm:"bigint"`
 }
 
 func (s *ModelSpec) Insert() error {
@@ -54,8 +70,6 @@ func (s *ModelSpec) Update() error {
 		"context_length":    s.ContextLength,
 		"max_output_tokens": s.MaxOutputTokens,
 		"capabilities":      s.Capabilities,
-		"description":       s.Description,
-		"icon":              s.Icon,
 		"release_date":      s.ReleaseDate,
 		"knowledge_cutoff":  s.KnowledgeCutoff,
 		"parameter_count":   s.ParameterCount,

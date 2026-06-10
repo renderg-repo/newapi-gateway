@@ -43,7 +43,6 @@ const defaultT = (key) => {
     '操作失败': '操作失败',
     'ID': 'ID',
     '模型名称': '模型名称',
-    '描述': '描述',
     '上下文长度': '上下文长度',
     '最大输出': '最大输出',
     '能力': '能力',
@@ -144,7 +143,7 @@ const ModelSpecs = ({ t: propT }) => {
     try {
       let res;
       if (isEdit) {
-        res = await API.post('/api/model-catalog/admin/specs', values);
+        res = await API.put('/api/model-catalog/admin/specs', values);
       } else {
         res = await API.post('/api/model-catalog/admin/specs', values);
       }

@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   SideSheet,
   Form,
@@ -34,6 +34,7 @@ import {
 } from '@douyinfe/semi-ui';
 import { Save, X } from 'lucide-react';
 import { CAPABILITY_OPTIONS, parseCapabilities, serializeCapabilities } from '../../utils';
+import { API } from '../../../../helpers';
 
 const { Title } = Typography;
 
@@ -44,8 +45,7 @@ const defaultT = (key) => {
     '创建模型规格': '创建模型规格',
     '基本信息': '基本信息',
     '模型名称': '模型名称',
-    '描述': '描述',
-    '图标': '图标',
+    '请选择模型': '请选择模型',
     '规格信息': '规格信息',
     '上下文长度': '上下文长度',
     '最大输出 Tokens': '最大输出 Tokens',
@@ -76,14 +76,28 @@ const ModelSpecEditModal = ({
   const formApiRef = useRef(null);
   const isEdit = editingSpec && editingSpec.id !== undefined;
   const placement = useMemo(() => (isEdit ? 'right' : 'right'), [isEdit]);
+  const [capCount, setCapCount] = useState(
+    editingSpec?.capabilities ? parseCapabilities(editingSpec.capabilities).length : 0
+  );
+  const [modelOptions, setModelOptions] = useState([]);
+
+  // 弹窗打开时加载已有模型列表
+  useEffect(() => {
+    if (visible) {
+      API.get('/api/model-catalog').then((res) => {
+        if (res.data?.success && Array.isArray(res.data.data)) {
+          const names = [...new Set(res.data.data.map((m) => m.model_name))].sort();
+          setModelOptions(names.map((n) => ({ value: n, label: n })));
+        }
+      });
+    }
+  }, [visible]);
 
   const getInitValues = () => ({
     model_name: editingSpec?.model_name || '',
     context_length: editingSpec?.context_length || 0,
     max_output_tokens: editingSpec?.max_output_tokens || 0,
     capabilities: editingSpec?.capabilities ? parseCapabilities(editingSpec.capabilities) : [],
-    description: editingSpec?.description || '',
-    icon: editingSpec?.icon || '',
     release_date: editingSpec?.release_date || '',
     knowledge_cutoff: editingSpec?.knowledge_cutoff || '',
     parameter_count: editingSpec?.parameter_count || '',
@@ -93,6 +107,8 @@ const ModelSpecEditModal = ({
   useEffect(() => {
     if (visible && formApiRef.current) {
       formApiRef.current.setValues(getInitValues());
+      const caps = editingSpec?.capabilities ? parseCapabilities(editingSpec.capabilities) : [];
+      setCapCount(caps.length);
     }
   }, [visible, editingSpec?.id]);
 
@@ -105,6 +121,22 @@ const ModelSpecEditModal = ({
       status: values.status ? 1 : 0,
     };
     onOk(submitData, isEdit);
+  };
+
+  const getFormApi = (api) => {
+    formApiRef.current = api;
+    if (api && api.watch) {
+      api.watch((field, value) => {
+        if (field === 'capabilities') {
+          if (value.length > 5) {
+            api.setValue('capabilities', value.slice(0, 5));
+            setCapCount(5);
+          } else {
+            setCapCount(value.length);
+          }
+        }
+      });
+    }
   };
 
   return (
@@ -160,7 +192,7 @@ const ModelSpecEditModal = ({
         <Form
           key={isEdit ? 'edit' : 'new'}
           initValues={getInitValues()}
-          getFormApi={(api) => (formApiRef.current = api)}
+          getFormApi={getFormApi}
           onSubmit={handleSubmit}
           className='p-4'
         >
@@ -169,25 +201,16 @@ const ModelSpecEditModal = ({
             <div className='space-y-4'>
               <Title heading={6} className='mb-0'>{t('基本信息')}</Title>
 
-              <Form.Input
+              <Form.Select
                 field='model_name'
                 label={t('模型名称')}
-                placeholder='gpt-4, claude-3-opus, etc.'
+                placeholder={t('请选择模型')}
                 disabled={isEdit}
-                rules={[{ required: true, message: t('请输入模型名称') }]}
-              />
-
-              <Form.TextArea
-                field='description'
-                label={t('描述')}
-                placeholder={t('描述这个模型...')}
-                rows={3}
-              />
-
-              <Form.Input
-                field='icon'
-                label={t('图标')}
-                placeholder='OpenAI, Anthropic, etc.'
+                filter
+                showSearchClear
+                style={{ width: '100%' }}
+                optionList={modelOptions}
+                rules={[{ required: true, message: t('请选择模型') }]}
               />
             </div>
 
@@ -214,6 +237,7 @@ const ModelSpecEditModal = ({
               <Form.CheckboxGroup
                 field='capabilities'
                 label={t('能力配置')}
+                labelExtra={<span className='text-xs text-gray-400'>（{capCount}/5）</span>}
                 direction='horizontal'
                 style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}
                 options={CAPABILITY_OPTIONS}

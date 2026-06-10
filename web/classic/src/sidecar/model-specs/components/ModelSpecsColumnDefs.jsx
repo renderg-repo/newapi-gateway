@@ -27,7 +27,6 @@ const defaultT = (key) => {
   const translations = {
     'ID': 'ID',
     '模型名称': '模型名称',
-    '描述': '描述',
     '上下文长度': '上下文长度',
     '最大输出': '最大输出',
     '能力': '能力',
@@ -70,17 +69,6 @@ export const getModelSpecsColumnDefs = ({ t: propT, onEdit, onDelete }) => {
           </div>
         );
       },
-    },
-    {
-      title: t('描述'),
-      dataIndex: 'description',
-      key: 'description',
-      width: 200,
-      render: (description) => (
-        <div className='text-sm text-slate-600 truncate max-w-[200px]' title={description}>
-          {description || '-'}
-        </div>
-      ),
     },
     {
       title: t('上下文长度'),

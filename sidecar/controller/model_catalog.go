@@ -44,8 +44,6 @@ type CreateModelSpecRequest struct {
 	ContextLength   int      `json:"context_length"`
 	MaxOutputTokens int      `json:"max_output_tokens"`
 	Capabilities    []string `json:"capabilities"`
-	Description     string   `json:"description"`
-	Icon            string   `json:"icon"`
 	ReleaseDate     string   `json:"release_date"`
 	KnowledgeCutoff string   `json:"knowledge_cutoff"`
 	ParameterCount  string   `json:"parameter_count"`
@@ -58,8 +56,6 @@ type UpdateModelSpecRequest struct {
 	ContextLength   int      `json:"context_length"`
 	MaxOutputTokens int      `json:"max_output_tokens"`
 	Capabilities    []string `json:"capabilities"`
-	Description     string   `json:"description"`
-	Icon            string   `json:"icon"`
 	ReleaseDate     string   `json:"release_date"`
 	KnowledgeCutoff string   `json:"knowledge_cutoff"`
 	ParameterCount  string   `json:"parameter_count"`
@@ -110,8 +106,6 @@ func AdminCreateModelSpec(c *gin.Context) {
 		ContextLength:   req.ContextLength,
 		MaxOutputTokens: req.MaxOutputTokens,
 		Capabilities:    string(caps),
-		Description:     req.Description,
-		Icon:            req.Icon,
 		ReleaseDate:     req.ReleaseDate,
 		KnowledgeCutoff: req.KnowledgeCutoff,
 		ParameterCount:  req.ParameterCount,
@@ -144,8 +138,6 @@ func AdminUpdateModelSpec(c *gin.Context) {
 		ContextLength:   req.ContextLength,
 		MaxOutputTokens: req.MaxOutputTokens,
 		Capabilities:    string(caps),
-		Description:     req.Description,
-		Icon:            req.Icon,
 		ReleaseDate:     req.ReleaseDate,
 		KnowledgeCutoff: req.KnowledgeCutoff,
 		ParameterCount:  req.ParameterCount,
