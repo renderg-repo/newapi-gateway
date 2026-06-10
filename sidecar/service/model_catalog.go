@@ -63,12 +63,6 @@ func overlaySpec(cm *CatalogModel, spec *sidecarModel.ModelSpec) {
 	cm.ContextLength = spec.ContextLength
 	cm.MaxOutputTokens = spec.MaxOutputTokens
 	cm.Capabilities = parseCapabilities(spec.Capabilities)
-	if spec.Description != "" {
-		cm.Description = spec.Description
-	}
-	if spec.Icon != "" {
-		cm.Icon = spec.Icon
-	}
 	cm.ReleaseDate = spec.ReleaseDate
 	cm.KnowledgeCutoff = spec.KnowledgeCutoff
 	cm.ParameterCount = spec.ParameterCount
