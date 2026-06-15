@@ -95,11 +95,9 @@ const ModelSpecEditModal = ({
 
   const getInitValues = () => ({
     model_name: editingSpec?.model_name || '',
-    context_length: editingSpec?.context_length || 0,
-    max_output_tokens: editingSpec?.max_output_tokens || 0,
+    context_length: editingSpec?.context_length || '',
     capabilities: editingSpec?.capabilities ? parseCapabilities(editingSpec.capabilities) : [],
     release_date: editingSpec?.release_date || '',
-    knowledge_cutoff: editingSpec?.knowledge_cutoff || '',
     parameter_count: editingSpec?.parameter_count || '',
     status: editingSpec ? editingSpec.status === 1 : true,
   });
@@ -219,17 +217,17 @@ const ModelSpecEditModal = ({
               <Title heading={6} className='mb-0'>{t('规格信息')}</Title>
 
               <div className='grid grid-cols-2 gap-4'>
-                <Form.InputNumber
+                <Form.Input
                   field='context_length'
                   label={t('上下文长度')}
-                  placeholder='0'
+                  placeholder='128k'
                   style={{ width: '100%' }}
                 />
 
-                <Form.InputNumber
-                  field='max_output_tokens'
-                  label={t('最大输出 Tokens')}
-                  placeholder='0'
+                <Form.Input
+                  field='parameter_count'
+                  label={t('参数量')}
+                  placeholder='1.76T'
                   style={{ width: '100%' }}
                 />
               </div>
@@ -248,25 +246,13 @@ const ModelSpecEditModal = ({
             <div className='space-y-4'>
               <Title heading={6} className='mb-0'>{t('元数据')}</Title>
 
-              <div className='grid grid-cols-2 gap-4'>
+              <div className='grid grid-cols-1 gap-4'>
                 <Form.Input
                   field='release_date'
                   label={t('发布日期')}
                   placeholder='2024-01'
                 />
-
-                <Form.Input
-                  field='knowledge_cutoff'
-                  label={t('知识截止')}
-                  placeholder='2024-06'
-                />
               </div>
-
-              <Form.Input
-                field='parameter_count'
-                label={t('参数量')}
-                placeholder='1.76T'
-              />
 
               <div className='flex items-center justify-between rounded-lg border p-4'>
                 <div className='space-y-0.5'>
