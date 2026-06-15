@@ -77,18 +77,7 @@ export const getModelSpecsColumnDefs = ({ t: propT, onEdit, onDelete }) => {
       width: 120,
       render: (value) => (
         <span className='font-mono text-sm'>
-          {value ? (value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value) : '-'}
-        </span>
-      ),
-    },
-    {
-      title: t('最大输出'),
-      dataIndex: 'max_output_tokens',
-      key: 'max_output_tokens',
-      width: 120,
-      render: (value) => (
-        <span className='font-mono text-sm'>
-          {value ? (value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value) : '-'}
+          {value || '-'}
         </span>
       ),
     },
