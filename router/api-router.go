@@ -400,6 +400,9 @@ func SetApiRouter(router *gin.Engine) {
 		// Sidecar: model recommendation routes
 		sidecarRouter.RegisterModelRecommendationRoutes(apiRouter)
 
+		// Sidecar: model performance routes
+		sidecarRouter.RegisterModelPerformanceRoutes(apiRouter)
+
 		// Sidecar: WeChat QR code scan login routes
 		sidecarRouter.RegisterWeChatQRCodeRoutes(apiRouter)
 
