@@ -1,0 +1,226 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Model Performance API",
+    "description": "模型性能分析接口，提供按模型名称聚合的延迟、Token 用量和请求次数统计。",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "{scheme}://{host}",
+      "variables": {
+        "scheme": {
+          "default": "https",
+          "enum": ["http", "https"]
+        },
+        "host": {
+          "default": "localhost:3000"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/api/dashboard/model-performance": {
+      "get": {
+        "tags": ["模型性能分析"],
+        "summary": "获取模型性能分析数据",
+        "description": "查询指定时间范围内当前用户的模型性能统计数据，按模型名称聚合。时间跨度不能超过 1 个月。",
+        "security": [
+          { "SessionCookie": [] },
+          { "BearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "start_timestamp",
+            "in": "query",
+            "required": true,
+            "description": "开始时间戳（秒）",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "end_timestamp",
+            "in": "query",
+            "required": true,
+            "description": "结束时间戳（秒）",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelPerformanceResponse"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "models": [
+                      {
+                        "model_name": "gpt-4o",
+                        "avg_latency_ms": 1250,
+                        "avg_latency_seconds": 1.25,
+                        "input_tokens": 150000,
+                        "output_tokens": 80000,
+                        "total_tokens": 230000,
+                        "request_count": 120
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "时间跨度超过 1 个月",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "时间跨度不能超过 1 个月"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "数据库错误"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ModelPerformance": {
+        "type": "object",
+        "description": "单个模型的性能统计数据",
+        "properties": {
+          "model_name": {
+            "type": "string",
+            "description": "模型名称"
+          },
+          "avg_latency_ms": {
+            "type": "integer",
+            "format": "int64",
+            "description": "平均延迟（毫秒）"
+          },
+          "avg_latency_seconds": {
+            "type": "number",
+            "format": "double",
+            "description": "平均延迟（秒）"
+          },
+          "input_tokens": {
+            "type": "integer",
+            "format": "int64",
+            "description": "输入 Token 总数"
+          },
+          "output_tokens": {
+            "type": "integer",
+            "format": "int64",
+            "description": "输出 Token 总数"
+          },
+          "total_tokens": {
+            "type": "integer",
+            "format": "int64",
+            "description": "总 Token 数"
+          },
+          "request_count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "请求次数"
+          }
+        },
+        "required": [
+          "model_name",
+          "avg_latency_ms",
+          "avg_latency_seconds",
+          "input_tokens",
+          "output_tokens",
+          "total_tokens",
+          "request_count"
+        ]
+      },
+      "ModelPerformanceResult": {
+        "type": "object",
+        "description": "性能分析结果",
+        "properties": {
+          "models": {
+            "type": "array",
+            "description": "模型性能统计列表",
+            "items": {
+              "$ref": "#/components/schemas/ModelPerformance"
+            }
+          }
+        },
+        "required": ["models"]
+      },
+      "ModelPerformanceResponse": {
+        "type": "object",
+        "description": "模型性能分析接口响应",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "请求是否成功"
+          },
+          "message": {
+            "type": "string",
+            "description": "错误信息（当 success 为 false 时）"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ModelPerformanceResult"
+          }
+        },
+        "required": ["success"]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "description": "错误响应",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "请求是否成功",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "description": "错误信息"
+          }
+        },
+        "required": ["success", "message"]
+      }
+    },
+    "securitySchemes": {
+      "SessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "session"
+      },
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
