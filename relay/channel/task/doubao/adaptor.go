@@ -113,10 +113,20 @@ func (a *TaskAdaptor) Init(info *relaycommon.RelayInfo) {
 	a.apiKey = info.ApiKey
 }
 
-// ValidateRequestAndSetAction parses body, validates fields and sets default action.
+// ValidateRequestAndSetAction parses body, validates fields and sets action based on input type.
 func (a *TaskAdaptor) ValidateRequestAndSetAction(c *gin.Context, info *relaycommon.RelayInfo) (taskErr *dto.TaskError) {
-	// Accept only POST /v1/video/generations as "generate" action.
-	return relaycommon.ValidateBasicTaskRequest(c, info, constant.TaskActionGenerate)
+	// 默认按文生视频处理，如果请求中包含图片则按图生视频处理
+	if err := relaycommon.ValidateBasicTaskRequest(c, info, constant.TaskActionTextGenerate); err != nil {
+		return err
+	}
+	req, err := relaycommon.GetTaskRequest(c)
+	if err != nil {
+		return service.TaskErrorWrapper(err, "get_task_request_failed", http.StatusInternalServerError)
+	}
+	if req.HasImage() {
+		info.Action = constant.TaskActionGenerate
+	}
+	return nil
 }
 
 // BuildRequestURL constructs the upstream URL.
