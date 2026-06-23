@@ -1,6 +1,9 @@
 package doubao
 
-import "strings"
+import (
+	"sort"
+	"strings"
+)
 
 var ModelList = []string{
 	"doubao-seedance-1-0-pro-250528",
@@ -39,6 +42,42 @@ var videoPriceTable = map[string]map[videoPriceKey]float64{
 func HasVariablePricing(modelName string) bool {
 	_, ok := videoPriceTable[modelName]
 	return ok
+}
+
+// VideoPriceVariant 描述一个模型在特定 (分辨率, 是否含视频输入) 下的原始单价。
+// Price 单位与 ModelRatio 一致：元/百万 token。
+type VideoPriceVariant struct {
+	Resolution string
+	HasVideo   bool
+	Price      float64
+}
+
+// GetVideoPriceVariants 返回指定模型的所有多维定价档位，按分辨率/是否视频排序。
+// 若模型无多维定价表，返回 nil。
+func GetVideoPriceVariants(modelName string) []VideoPriceVariant {
+	prices, ok := videoPriceTable[modelName]
+	if !ok {
+		return nil
+	}
+	variants := make([]VideoPriceVariant, 0, len(prices))
+	for key, price := range prices {
+		resolution := "480p/720p"
+		if key.is1080p {
+			resolution = "1080p"
+		}
+		variants = append(variants, VideoPriceVariant{
+			Resolution: resolution,
+			HasVideo:   key.hasVideo,
+			Price:      price,
+		})
+	}
+	sort.Slice(variants, func(i, j int) bool {
+		if variants[i].Resolution != variants[j].Resolution {
+			return variants[i].Resolution < variants[j].Resolution
+		}
+		return !variants[i].HasVideo && variants[j].HasVideo
+	})
+	return variants
 }
 
 // GetVideoInputRatio 返回指定模型在给定输出分辨率/是否含视频输入下，相对基准价的计费倍率。

@@ -39,15 +39,23 @@ type CatalogModel struct {
 	ReleaseDate            string   `json:"release_date,omitempty"`
 	KnowledgeCutoff        string   `json:"knowledge_cutoff,omitempty"`
 	ParameterCount         string   `json:"parameter_count,omitempty"`
-	InputPrice           float64  `json:"input_price"`
-	OutputPrice          float64  `json:"output_price"`
-	HasVariablePricing   bool     `json:"has_variable_pricing"`
+	InputPrice             float64  `json:"input_price"`
+	OutputPrice            float64  `json:"output_price"`
+	HasVariablePricing     bool     `json:"has_variable_pricing"`
+	PriceVariants          []PriceVariant `json:"price_variants,omitempty"`
 	// Runtime metrics
 	Status                 string   `json:"status"`
 	AvgLatencyMs           int64    `json:"avg_latency_ms"`
 	SuccessRate            float64  `json:"success_rate"`
 	IsHot                  bool     `json:"is_hot"`
 	RequestCount           int64    `json:"request_count"`
+}
+
+// PriceVariant 描述模型在特定请求参数下的输入价格档位。
+type PriceVariant struct {
+	Resolution string  `json:"resolution"`
+	HasVideo   bool    `json:"has_video"`
+	InputPrice float64 `json:"input_price"`
 }
 
 func parseCapabilities(capStr string) []string {
@@ -112,6 +120,16 @@ func buildCatalogModel(p model.Pricing, vendorMap map[int]model.PricingVendor) C
 		InputPrice:           inputPrice,
 		OutputPrice:          outputPrice,
 		HasVariablePricing:   doubao.HasVariablePricing(p.ModelName),
+	}
+	if variants := doubao.GetVideoPriceVariants(p.ModelName); len(variants) > 0 {
+		cm.PriceVariants = make([]PriceVariant, len(variants))
+		for i, v := range variants {
+			cm.PriceVariants[i] = PriceVariant{
+				Resolution: v.Resolution,
+				HasVideo:   v.HasVideo,
+				InputPrice: v.Price * 2 * ratio,
+			}
+		}
 	}
 	if v, ok := vendorMap[p.VendorID]; ok {
 		cm.VendorName = v.Name
