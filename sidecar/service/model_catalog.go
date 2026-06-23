@@ -127,7 +127,7 @@ func buildCatalogModel(p model.Pricing, vendorMap map[int]model.PricingVendor) C
 			cm.PriceVariants[i] = PriceVariant{
 				Resolution: v.Resolution,
 				HasVideo:   v.HasVideo,
-				InputPrice: v.Price * 2 * ratio,
+				InputPrice: v.Price * ratio,
 			}
 		}
 	}
