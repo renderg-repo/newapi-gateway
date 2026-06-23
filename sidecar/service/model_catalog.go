@@ -8,6 +8,7 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
 	perfmetrics "github.com/QuantumNous/new-api/pkg/perf_metrics"
+	"github.com/QuantumNous/new-api/relay/channel/task/doubao"
 	sidecarModel "github.com/QuantumNous/new-api/sidecar/model"
 	"github.com/QuantumNous/new-api/setting/ratio_setting"
 )
@@ -38,8 +39,9 @@ type CatalogModel struct {
 	ReleaseDate            string   `json:"release_date,omitempty"`
 	KnowledgeCutoff        string   `json:"knowledge_cutoff,omitempty"`
 	ParameterCount         string   `json:"parameter_count,omitempty"`
-	InputPrice             float64  `json:"input_price"`
-	OutputPrice            float64  `json:"output_price"`
+	InputPrice           float64  `json:"input_price"`
+	OutputPrice          float64  `json:"output_price"`
+	HasVariablePricing   bool     `json:"has_variable_pricing"`
 	// Runtime metrics
 	Status                 string   `json:"status"`
 	AvgLatencyMs           int64    `json:"avg_latency_ms"`
@@ -109,6 +111,7 @@ func buildCatalogModel(p model.Pricing, vendorMap map[int]model.PricingVendor) C
 		Icon:                 p.Icon,
 		InputPrice:           inputPrice,
 		OutputPrice:          outputPrice,
+		HasVariablePricing:   doubao.HasVariablePricing(p.ModelName),
 	}
 	if v, ok := vendorMap[p.VendorID]; ok {
 		cm.VendorName = v.Name

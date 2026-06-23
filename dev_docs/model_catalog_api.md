@@ -231,6 +231,7 @@
 | release_date | string | spec | 发布日期 |
 | knowledge_cutoff | string | spec | 知识截止 |
 | parameter_count | string | spec | 参数量 |
+| has_variable_pricing | bool | pricing（由 doubao 价格表推导） | 是否存在按请求参数变化的多维定价，如 Seedance 2.0 按分辨率/视频输入变价 |
 
 ---
 

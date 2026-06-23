@@ -35,6 +35,12 @@ var videoPriceTable = map[string]map[videoPriceKey]float64{
 	},
 }
 
+// HasVariablePricing 返回指定模型是否配置了按输出分辨率/视频输入变化的多维价格表。
+func HasVariablePricing(modelName string) bool {
+	_, ok := videoPriceTable[modelName]
+	return ok
+}
+
 // GetVideoInputRatio 返回指定模型在给定输出分辨率/是否含视频输入下，相对基准价的计费倍率。
 // 第二个返回值表示该模型是否配置了价格表；倍率为 1.0 时调用方可忽略该 OtherRatio。
 func GetVideoInputRatio(modelName, resolution string, hasVideo bool) (float64, bool) {
