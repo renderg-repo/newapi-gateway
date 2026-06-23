@@ -1147,6 +1147,7 @@
           "parameter_count": { "type": "string", "example": "" },
           "input_price": { "type": "number", "example": 2.5, "description": "每百万 token 输入价格（USD）" },
           "output_price": { "type": "number", "example": 10, "description": "每百万 token 输出价格（USD）" },
+          "has_variable_pricing": { "type": "boolean", "example": true, "description": "是否存在按请求参数变化的多维定价（如 Seedance 2.0 按分辨率/视频输入变价）" },
           "status": { "type": "string", "example": "running", "description": "模型运行状态：running / degraded / down / unknown" },
           "avg_latency_ms": { "type": "integer", "example": 320, "description": "过去 24 小时平均延迟（毫秒）" },
           "success_rate": { "type": "number", "example": 98.5, "description": "过去 24 小时成功率（%）" },
