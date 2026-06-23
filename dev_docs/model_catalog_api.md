@@ -232,6 +232,19 @@
 | knowledge_cutoff | string | spec | 知识截止 |
 | parameter_count | string | spec | 参数量 |
 | has_variable_pricing | bool | pricing（由 doubao 价格表推导） | 是否存在按请求参数变化的多维定价，如 Seedance 2.0 按分辨率/视频输入变价 |
+| price_variants | PriceVariant[] | pricing（由 doubao 价格表推导） | 多维定价档位列表，仅 has_variable_pricing 为 true 时返回 |
+
+---
+
+## PriceVariant 数据结构
+
+多维定价档位：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| resolution | string | 输出分辨率档位，如 `480p/720p`、`1080p` |
+| has_video | bool | 输入是否包含视频 |
+| input_price | float64 | 该档位每百万 token 输入价格（USD） |
 
 ---
 
