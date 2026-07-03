@@ -30,7 +30,22 @@
 
 **认证**：无需认证（公开接口）
 
-**请求参数**：无
+**请求参数**：
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| vendor | string | 否 | 按供应商名称精确过滤，如 `OpenAI`、`火山引擎` |
+| capabilities | string | 否 | 按能力标签过滤，多个用逗号分隔（AND 关系）。能力标签来源：1) model_specs 手动配置；2) 系统根据渠道类型自动注入（如视频模型自动获得 `video`、音频模型自动获得 `audio`）。常见标签：`chat`, `vision`, `function`, `streaming`, `video`, `audio`, `image-generation` |
+
+**示例**：
+
+```bash
+# 获取所有视频生成模型
+GET /api/model-catalog?capabilities=video
+
+# 获取火山引擎的视频生成模型
+GET /api/model-catalog?vendor=火山引擎&capabilities=video
+```
 
 **响应示例**：
 
@@ -213,7 +228,7 @@
 | vendor_icon | string | pricing | 供应商图标 |
 | context_length | int | spec | 上下文长度 |
 | max_output_tokens | int | spec | 最大输出 token |
-| capabilities | string[] | spec | 能力标签 |
+| capabilities | string[] | spec + 自动注入 | 能力标签。除 model_specs 手动配置外，系统还会根据渠道类型自动注入（如视频渠道自动加 `video`、音频渠道自动加 `audio`）。自动注入不覆盖手动配置 |
 | model_ratio | float64 | pricing | 模型倍率 |
 | completion_ratio | float64 | pricing | 补全倍率 |
 | model_price | float64 | pricing | 固定价格 |
