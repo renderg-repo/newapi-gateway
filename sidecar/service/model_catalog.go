@@ -9,9 +9,9 @@ import (
 	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/model"
 	perfmetrics "github.com/QuantumNous/new-api/pkg/perf_metrics"
-	"github.com/QuantumNous/new-api/relay/channel/task/doubao"
 	sidecarModel "github.com/QuantumNous/new-api/sidecar/model"
 	"github.com/QuantumNous/new-api/setting/ratio_setting"
+	"github.com/QuantumNous/new-api/setting/video_price_setting"
 )
 
 type CatalogModel struct {
@@ -120,15 +120,15 @@ func buildCatalogModel(p model.Pricing, vendorMap map[int]model.PricingVendor) C
 		Icon:                 p.Icon,
 		InputPrice:           inputPrice,
 		OutputPrice:          outputPrice,
-		HasVariablePricing:   doubao.HasVariablePricing(p.ModelName),
+		HasVariablePricing:   video_price_setting.HasVariablePricing(p.ModelName),
 	}
-	if variants := doubao.GetVideoPriceVariants(p.ModelName); len(variants) > 0 {
+	if variants := video_price_setting.GetVideoPriceVariants(p.ModelName); len(variants) > 0 {
 		cm.PriceVariants = make([]PriceVariant, len(variants))
 		for i, v := range variants {
 			cm.PriceVariants[i] = PriceVariant{
 				Resolution: v.Resolution,
 				HasVideo:   v.HasVideo,
-				InputPrice: v.Price * ratio,
+				InputPrice: v.Price * 2 * ratio,
 			}
 		}
 	}

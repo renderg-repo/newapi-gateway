@@ -14,6 +14,7 @@ import { GroupRatioForm } from './group-ratio-form'
 import { ModelRatioForm } from './model-ratio-form'
 import { ToolPriceSettings } from './tool-price-settings'
 import { UpstreamRatioSync } from './upstream-ratio-sync'
+import { VideoPriceSettings } from './video-price-settings'
 import {
   formatJsonForTextarea,
   normalizeJsonString,
@@ -179,12 +180,18 @@ const groupSchema = z.object({
 
 type ModelFormValues = z.infer<typeof modelSchema>
 type GroupFormValues = z.infer<typeof groupSchema>
-type RatioTabId = 'models' | 'groups' | 'tool-prices' | 'upstream-sync'
+type RatioTabId =
+  | 'models'
+  | 'groups'
+  | 'tool-prices'
+  | 'upstream-sync'
+  | 'video-prices'
 
 type RatioSettingsCardProps = {
   modelDefaults: ModelFormValues
   groupDefaults: GroupFormValues
   toolPricesDefault: string
+  videoPricesDefault: string
   titleKey?: string
   descriptionKey?: string
   visibleTabs?: RatioTabId[]
@@ -194,6 +201,7 @@ export function RatioSettingsCard({
   modelDefaults,
   groupDefaults,
   toolPricesDefault,
+  videoPricesDefault = '{}',
   titleKey = 'Pricing Ratios',
   descriptionKey = 'Configure model, caching, and group ratios used for billing',
   visibleTabs = ['models', 'groups', 'tool-prices', 'upstream-sync'],
@@ -426,6 +434,7 @@ export function RatioSettingsCard({
     groups: 'Group ratios',
     'tool-prices': 'Tool prices',
     'upstream-sync': 'Upstream price sync',
+    'video-prices': 'Video model prices',
   }
   const tabsGridClass =
     {
@@ -459,6 +468,9 @@ export function RatioSettingsCard({
     }
     if (tab === 'tool-prices') {
       return <ToolPriceSettings defaultValue={toolPricesDefault} />
+    }
+    if (tab === 'video-prices') {
+      return <VideoPriceSettings defaultValue={videoPricesDefault} />
     }
     return (
       <UpstreamRatioSync

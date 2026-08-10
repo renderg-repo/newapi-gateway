@@ -1,0 +1,92 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "logo 星海 Token" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - img "logo" [ref=e6]
+        - generic [ref=e7]: 星海 Token
+      - navigation [ref=e8]:
+        - link "模型广场" [ref=e9] [cursor=pointer]:
+          - /url: /models
+        - link "定价" [ref=e10] [cursor=pointer]:
+          - /url: /pricing
+        - link "API 文档" [ref=e11] [cursor=pointer]:
+          - /url: https://token.spacehpc.com/docs/
+      - generic [ref=e12]:
+        - link "控制台" [ref=e13] [cursor=pointer]:
+          - /url: /dashboard
+        - link "登录" [ref=e14] [cursor=pointer]:
+          - /url: /auth/login
+  - main [ref=e15]:
+    - generic [ref=e16]:
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - generic [ref=e20]:
+            - img "thunderbolt" [ref=e21]
+            - text: 已接入 20+ 主流 AI 模型
+          - heading "统一接入 全球顶尖 AI 模型" [level=1] [ref=e24]:
+            - generic [ref=e25]: 统一接入
+            - generic [ref=e26]: 全球顶尖 AI 模型
+          - paragraph [ref=e27]: 一个 API Key，无限可能。高可用、低延迟、多模型智能路由，让 AI 集成变得简单高效。
+          - generic [ref=e28]:
+            - button "立即开始 arrow-right" [ref=e29] [cursor=pointer]:
+              - generic [ref=e30]: 立即开始
+              - img "arrow-right" [ref=e31]
+            - link "查看文档" [ref=e35] [cursor=pointer]:
+              - /url: https://token.spacehpc.com/docs/
+        - generic [ref=e36]:
+          - generic [ref=e37]:
+            - img "dashboard" [ref=e39]
+            - generic [ref=e42]: "0"
+            - generic [ref=e43]: 平均响应延迟
+          - generic [ref=e44]:
+            - img "safety" [ref=e46]
+            - generic [ref=e50]: "0"
+            - generic [ref=e51]: 服务可用性
+          - generic [ref=e52]:
+            - img "thunderbolt" [ref=e54]
+            - generic [ref=e57]: "0"
+            - generic [ref=e58]: 接入模型数量
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - heading "为什么选择 星海 Token" [level=2] [ref=e62]
+          - paragraph [ref=e63]: 专为开发者和企业打造的 AI API 聚合平台
+        - generic [ref=e64]:
+          - generic [ref=e65]:
+            - img "global" [ref=e67]
+            - heading "统一接入" [level=3] [ref=e70]
+            - paragraph [ref=e71]: 一个 API Key 即可调用 OpenAI、Claude、DeepSeek 等 20+ 主流模型，无需管理多个账号。
+          - generic [ref=e72]:
+            - img "desktop" [ref=e74]
+            - heading "智能路由" [level=3] [ref=e77]
+            - paragraph [ref=e78]: 基于延迟、成本和可用性的智能路由算法，自动选择最优模型节点。
+          - generic [ref=e79]:
+            - img "lock" [ref=e81]
+            - heading "企业级安全" [level=3] [ref=e84]
+            - paragraph [ref=e85]: 支持 IP 白名单、请求签名、密钥轮换等企业级安全策略，保障 API 安全。
+          - generic [ref=e86]:
+            - img "line-chart" [ref=e88]
+            - heading "实时用量监控" [level=3] [ref=e91]
+            - paragraph [ref=e92]: 详细的 Token 消耗统计、成本分析和用量预警，帮助优化 AI 支出。
+      - generic [ref=e95]:
+        - generic [ref=e96]: ⭐ 开发者评分 4.9 / 5.0
+        - heading "已有 1,000+ 开发者选择星海 Token" [level=2] [ref=e97]
+        - paragraph [ref=e98]: 无需绑定信用卡，3 分钟快速完成接入。
+        - generic [ref=e99]:
+          - button [ref=e100] [cursor=pointer]:
+            - text: 立即注册
+            - img "arrow-right" [ref=e101]
+          - link "查看模型" [ref=e104] [cursor=pointer]:
+            - /url: /models
+  - contentinfo [ref=e105]:
+    - generic [ref=e106]:
+      - generic [ref=e108]:
+        - link "logo 星海 Token" [ref=e109] [cursor=pointer]:
+          - /url: /
+          - img "logo" [ref=e110]
+          - generic [ref=e111]: 星海 Token
+        - paragraph [ref=e112]: 一站式 AI API 聚合平台，为开发者提供稳定、高效的模型接入服务。
+      - paragraph [ref=e114]:
+        - text: 北京润德骥图科技有限公司 Copyright ©2026 token.spacehpc.com 备案号：
+        - link "京ICP备2020049003号-1" [ref=e115] [cursor=pointer]:
+          - /url: https://beian.miit.gov.cn

@@ -654,6 +654,8 @@ func handleConfigUpdate(key, value string) bool {
 	} else if configName == "billing_setting" {
 		InvalidatePricingCache()
 		ratio_setting.InvalidateExposedDataCache()
+	} else if configName == "video_price_table" {
+		InvalidatePricingCache()
 	} else if configName == "theme" {
 		system_setting.UpdateAndSyncTheme()
 	}

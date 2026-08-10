@@ -442,6 +442,9 @@ func updateVideoSingleTask(ctx context.Context, adaptor TaskPollingAdaptor, ch *
 		if strings.HasPrefix(taskResult.Url, "data:") {
 			// data: URI (e.g. Vertex base64 encoded video) — keep in Data, not in ResultURL
 			task.PrivateData.ResultURL = taskcommon.BuildProxyURL(task.TaskID)
+		} else if taskResult.Url != "" && ch.Type == constant.ChannelTypeDoubaoVideo {
+			// 移动云 (豆包) 视频: 上游 CDN 返回 AES-256 加密的 binary/octet-stream，浏览器 <video> 无法直接解码。改用代理 URL 走网关中转。
+			task.PrivateData.ResultURL = taskcommon.BuildProxyURL(task.TaskID)
 		} else if taskResult.Url != "" {
 			// Direct upstream URL (e.g. Kling, Ali, Doubao, etc.)
 			task.PrivateData.ResultURL = taskResult.Url

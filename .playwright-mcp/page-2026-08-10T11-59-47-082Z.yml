@@ -1,0 +1,120 @@
+- generic [ref=f6e2]:
+  - banner [ref=f6e3]:
+    - generic [ref=f6e4]:
+      - link "logo 星海 Token" [ref=f6e5] [cursor=pointer]:
+        - /url: /
+        - img "logo" [ref=f6e6]
+        - generic [ref=f6e7]: 星海 Token
+      - navigation [ref=f6e8]:
+        - link "模型广场" [ref=f6e9] [cursor=pointer]:
+          - /url: /models
+        - link "定价" [ref=f6e10] [cursor=pointer]:
+          - /url: /pricing
+        - link "API 文档" [ref=f6e11] [cursor=pointer]:
+          - /url: https://token.spacehpc.com/docs/
+      - generic [ref=f6e12]:
+        - link "控制台" [ref=f6e13] [cursor=pointer]:
+          - /url: /dashboard
+        - link "登录" [ref=f6e14] [cursor=pointer]:
+          - /url: /auth/login
+  - main [ref=f6e15]:
+    - generic [ref=f6e16]:
+      - complementary [ref=f6e17]:
+        - generic [ref=f6e18]:
+          - generic [ref=f6e19]:
+            - generic [ref=f6e20]: 体验中心
+            - generic [ref=f6e21]:
+              - link [ref=f6e22] [cursor=pointer]:
+                - /url: /dashboard/chat
+                - img "message" [ref=f6e23]
+                - text: 聊天
+              - link [ref=f6e26] [cursor=pointer]:
+                - /url: /dashboard/video
+                - img "video-camera" [ref=f6e27]
+                - text: 视频生成
+          - generic [ref=f6e30]:
+            - generic [ref=f6e31]: 工作台
+            - generic [ref=f6e32]:
+              - link [ref=f6e33] [cursor=pointer]:
+                - /url: /dashboard
+                - img "appstore" [ref=f6e34]
+                - text: 概览
+              - link [ref=f6e37] [cursor=pointer]:
+                - /url: /dashboard/usage
+                - img "line-chart" [ref=f6e38]
+                - text: 消耗日志
+              - link [ref=f6e41] [cursor=pointer]:
+                - /url: /dashboard/tasks
+                - img "file-text" [ref=f6e42]
+                - text: 任务日志
+          - generic [ref=f6e45]:
+            - generic [ref=f6e46]: 管理
+            - generic [ref=f6e47]:
+              - link [ref=f6e48] [cursor=pointer]:
+                - /url: /dashboard/apikeys
+                - img "key" [ref=f6e49]
+                - text: API 密钥
+              - link [ref=f6e52] [cursor=pointer]:
+                - /url: /dashboard/billing
+                - img "wallet" [ref=f6e53]
+                - text: 充值管理
+              - link [ref=f6e56] [cursor=pointer]:
+                - /url: /dashboard/settings
+                - img "setting" [ref=f6e57]
+                - text: 设置
+        - generic [ref=f6e61]:
+          - img "exclamation-circle" [ref=f6e62]
+          - generic [ref=f6e66]:
+            - generic [ref=f6e67]: 余额
+            - generic [ref=f6e68]: ¥0.00
+          - link "充值" [ref=f6e69] [cursor=pointer]:
+            - /url: /dashboard/billing
+      - generic [ref=f6e73]:
+        - generic [ref=f6e74]:
+          - generic [ref=f6e75]:
+            - heading "任务日志" [level=1] [ref=f6e76]
+            - paragraph [ref=f6e77]: 查看和管理异步任务执行记录
+          - generic [ref=f6e79]:
+            - button "今天" [ref=f6e80] [cursor=pointer]
+            - button "本周" [ref=f6e82] [cursor=pointer]
+            - button "本月" [ref=f6e84] [cursor=pointer]
+            - button "近 3 月" [ref=f6e86] [cursor=pointer]
+            - button [ref=f6e88] [cursor=pointer]:
+              - img "calendar" [ref=f6e89]
+              - text: 自定义
+        - generic [ref=f6e92]:
+          - generic [ref=f6e95]:
+            - img "search"
+            - textbox "搜索任务 ID" [ref=f6e96]
+          - generic [ref=f6e97]:
+            - img "loading" [ref=f6e98]
+            - text: 加载数据中...
+          - generic [ref=f6e101]:
+            - table [ref=f6e103]:
+              - rowgroup [ref=f6e104]:
+                - row [ref=f6e105]:
+                  - columnheader "提交时间" [ref=f6e106]
+                  - columnheader "结束时间" [ref=f6e107]
+                  - columnheader "花费时间" [ref=f6e108]
+                  - columnheader "平台" [ref=f6e109]
+                  - columnheader "类型" [ref=f6e110]
+                  - columnheader "任务 ID" [ref=f6e111]
+                  - columnheader "任务状态" [ref=f6e112]
+                  - columnheader "进度" [ref=f6e113]
+                  - columnheader "详情" [ref=f6e114]
+              - rowgroup
+            - list [ref=f6e116]:
+              - listitem [ref=f6e117]: 共 0 条
+              - listitem "上一页" [ref=f6e118]:
+                - button [disabled] [ref=f6e119]:
+                  - img "left" [ref=f6e120]
+              - listitem "1" [ref=f6e123] [cursor=pointer]
+              - listitem "下一页" [ref=f6e125]:
+                - button [disabled] [ref=f6e126]:
+                  - img "right" [ref=f6e127]
+              - listitem [ref=f6e130]:
+                - generic [ref=f6e131]:
+                  - generic "10 条/页" [ref=f6e132]:
+                    - text: 10 条/页
+                    - combobox "页码" [ref=f6e133]
+                  - img "down" [ref=f6e135]
