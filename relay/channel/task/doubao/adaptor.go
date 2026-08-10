@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
@@ -335,7 +336,11 @@ func (a *TaskAdaptor) ParseTaskResult(respBody []byte) (*relaycommon.TaskInfo, e
 	case "succeeded":
 		taskResult.Status = model.TaskStatusSuccess
 		taskResult.Progress = "100%"
-		taskResult.Url = resTask.Content.VideoURL
+		if !a.isMobileCloud() {
+			// 直连火山：直接保存 TOS 预签名 URL
+			taskResult.Url = resTask.Content.VideoURL
+		}
+		// 移动云：Url 留空 → 轮询回退到 BuildProxyURL（经代理 /download 解密）
 		// 解析 usage 信息用于按倍率计费
 		taskResult.CompletionTokens = resTask.Usage.CompletionTokens
 		taskResult.TotalTokens = resTask.Usage.TotalTokens
@@ -376,4 +381,9 @@ func (a *TaskAdaptor) ConvertToOpenAIVideo(originTask *model.Task) ([]byte, erro
 	}
 
 	return common.Marshal(openAIVideo)
+}
+
+// isMobileCloud 判断当前渠道是否为移动云加密代理（baseURL 带 /aicc/ 前缀）
+func (a *TaskAdaptor) isMobileCloud() bool {
+	return strings.Contains(a.baseURL, "/aicc/")
 }

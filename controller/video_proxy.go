@@ -109,6 +109,19 @@ func VideoProxy(c *gin.Context) {
 	case constant.ChannelTypeOpenAI, constant.ChannelTypeSora:
 		videoURL = fmt.Sprintf("%s/v1/videos/%s/content", baseURL, task.GetUpstreamTaskID())
 		req.Header.Set("Authorization", "Bearer "+channel.Key)
+	case constant.ChannelTypeDoubaoVideo:
+		if isMobileCloudBaseURL(baseURL) {
+			// 移动云：经代理 /download 解密后转发明文 MP4
+			videoURL = fmt.Sprintf("%s/api/v3/contents/generations/tasks/%s/download?model=%s",
+				baseURL,
+				task.GetUpstreamTaskID(),
+				url.QueryEscape(task.Properties.OriginModelName),
+			)
+			req.Header.Set("Authorization", "Bearer "+channel.Key)
+		} else {
+			// 直连火山：原逻辑，直接转发 GetResultURL
+			videoURL = task.GetResultURL()
+		}
 	default:
 		// Video URL is stored in PrivateData.ResultURL (fallback to FailReason for old data)
 		videoURL = task.GetResultURL()
@@ -202,4 +215,9 @@ func writeVideoDataURL(c *gin.Context, dataURL string) error {
 	c.Writer.WriteHeader(http.StatusOK)
 	_, err = c.Writer.Write(videoBytes)
 	return err
+}
+
+// isMobileCloudBaseURL 判断渠道 baseURL 是否为移动云加密代理（含 /aicc/ 前缀）
+func isMobileCloudBaseURL(baseURL string) bool {
+	return strings.Contains(baseURL, "/aicc/")
 }
