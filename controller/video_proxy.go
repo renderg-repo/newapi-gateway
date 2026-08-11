@@ -112,11 +112,15 @@ func VideoProxy(c *gin.Context) {
 	case constant.ChannelTypeDoubaoVideo:
 		if isMobileCloudBaseURL(baseURL) {
 			// 移动云：经代理 /download 解密后转发明文 MP4
-			videoURL = fmt.Sprintf("%s/api/v3/contents/generations/tasks/%s/download?model=%s",
+			videoURL = fmt.Sprintf("%s/api/v3/contents/generations/tasks/%s/download",
 				baseURL,
 				task.GetUpstreamTaskID(),
-				url.QueryEscape(task.Properties.OriginModelName),
 			)
+			// model 需与创建任务时一致（移动云模型名，即映射后的 upstream model），
+			// 代理按 api_key+model 复用 Client；为空时由代理使用默认模型
+			if upModel := task.Properties.UpstreamModelName; upModel != "" {
+				videoURL += "?model=" + url.QueryEscape(upModel)
+			}
 			req.Header.Set("Authorization", "Bearer "+channel.Key)
 		} else {
 			// 直连火山：原逻辑，直接转发 GetResultURL
@@ -143,10 +147,14 @@ func VideoProxy(c *gin.Context) {
 	}
 
 	fetchSetting := system_setting.GetFetchSetting()
-	if err := common.ValidateURLWithFetchSetting(videoURL, fetchSetting.EnableSSRFProtection, fetchSetting.AllowPrivateIp, fetchSetting.DomainFilterMode, fetchSetting.IpFilterMode, fetchSetting.DomainList, fetchSetting.IpList, fetchSetting.AllowedPorts, fetchSetting.ApplyIPFilterForDomain); err != nil {
-		logger.LogError(c.Request.Context(), fmt.Sprintf("Video URL blocked for task %s: %v", taskID, err))
-		videoProxyError(c, http.StatusForbidden, "server_error", fmt.Sprintf("request blocked: %v", err))
-		return
+	// 对于 Doubao 移动云渠道，URL 由渠道 base_url 构造（内部代理），
+	// 不来自用户输入，不需要 SSRF 校验。
+	if channel.Type != constant.ChannelTypeDoubaoVideo || !isMobileCloudBaseURL(baseURL) {
+		if err := common.ValidateURLWithFetchSetting(videoURL, fetchSetting.EnableSSRFProtection, fetchSetting.AllowPrivateIp, fetchSetting.DomainFilterMode, fetchSetting.IpFilterMode, fetchSetting.DomainList, fetchSetting.IpList, fetchSetting.AllowedPorts, fetchSetting.ApplyIPFilterForDomain); err != nil {
+			logger.LogError(c.Request.Context(), fmt.Sprintf("Video URL blocked for task %s: %v", taskID, err))
+			videoProxyError(c, http.StatusForbidden, "server_error", fmt.Sprintf("request blocked: %v", err))
+			return
+		}
 	}
 
 	req.URL, err = url.Parse(videoURL)
