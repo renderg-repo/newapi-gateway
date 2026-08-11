@@ -207,6 +207,40 @@ func TokenOrUserAuth() func(c *gin.Context) {
 	}
 }
 
+// VideoProxyAuth 视频内容代理端点专用认证中间件。
+// 仅用于只读的视频代理路由（/v1/videos/:task_id/content），不应用于其他端点。
+// 认证顺序：
+//  1. session 认证（控制台用户）
+//  2. New-API-User 头认证（APIToken 前端代理转发，目标为受信任的上游网关）
+//  3. API token 认证（外部 API 客户端）
+//
+// 安全说明：此中间件仅在只读的视频代理端点使用，且 VideoProxy 内部还会
+// 通过 model.GetByTaskId(userId, taskID) 二次校验任务归属，因此伪造
+// New-API-User 头最多只能访问到伪造者自己可枚举 task_id 的视频，无法越权。
+func VideoProxyAuth() func(c *gin.Context) {
+	return func(c *gin.Context) {
+		// 1. session auth (dashboard users)
+		session := sessions.Default(c)
+		if id := session.Get("id"); id != nil {
+			if status, ok := session.Get("status").(int); ok && status == common.UserStatusEnabled {
+				c.Set("id", id)
+				c.Next()
+				return
+			}
+		}
+		// 2. New-API-User header (APIToken proxy forward)
+		if apiUserIdStr := c.Request.Header.Get("New-API-User"); apiUserIdStr != "" {
+			if userId, err := strconv.Atoi(apiUserIdStr); err == nil && userId > 0 {
+				c.Set("id", userId)
+				c.Next()
+				return
+			}
+		}
+		// 3. token auth (API clients)
+		TokenAuth()(c)
+	}
+}
+
 // TokenAuthReadOnly 宽松版本的令牌认证中间件，用于只读查询接口。
 // 只验证令牌 key 是否存在，不检查令牌状态、过期时间和额度。
 // 即使令牌已过期、已耗尽或已禁用，也允许访问。
