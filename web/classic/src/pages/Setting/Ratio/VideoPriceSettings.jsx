@@ -20,6 +20,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   Banner,
   Button,
+  Card,
   Checkbox,
   Input,
   InputNumber,
@@ -37,120 +38,219 @@ const { Text } = Typography;
 
 const OPTION_KEY = 'video_price_table.table';
 
-function parseTable(raw) {
-  if (!raw) return {};
+// ── 数据模型与纯函数 ──
+// 存储格式：Record<modelName, { resolution, has_video, price }[]>
+// 解析时兼容历史 camelCase 键 "hasVideo"。
+
+function parseTableToGroups(raw) {
+  if (!raw) return [];
+  let parsed;
   try {
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      return parsed;
-    }
-  } catch {}
-  return {};
-}
-
-function tableToRows(table) {
-  const rows = [];
-  let id = 0;
-  for (const [model, variants] of Object.entries(table)) {
-    for (const v of variants) {
-      rows.push({
-        id,
-        model,
-        resolution: v.resolution,
-        hasVideo: v.hasVideo,
-        price: v.price,
-      });
-      id += 1;
-    }
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
   }
-  return rows;
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
+    return null;
+
+  const groups = [];
+  let id = 0;
+  for (const [model, variants] of Object.entries(parsed)) {
+    const tiers = (Array.isArray(variants) ? variants : []).map((v) => ({
+      id: id++,
+      resolution: v?.resolution ?? '',
+      hasVideo: v?.has_video ?? v?.hasVideo ?? false,
+      price: typeof v?.price === 'number' ? v.price : 0,
+    }));
+    groups.push({ id: id++, model, tiers });
+  }
+  return groups;
 }
 
-function rowsToTable(rows) {
+function groupsToTable(groups) {
   const table = {};
-  for (const row of rows) {
-    if (!row.model?.trim()) continue;
-    const model = row.model.trim();
-    if (!table[model]) table[model] = [];
-    table[model].push({
-      resolution: row.resolution?.trim() || '480p',
-      hasVideo: !!row.hasVideo,
-      price: Number(row.price) || 0,
-    });
+  for (const group of groups) {
+    const model = group.model?.trim();
+    if (!model) continue;
+    const variants = [];
+    for (const tier of group.tiers) {
+      const resolution = tier.resolution?.trim();
+      if (!resolution) continue;
+      variants.push({
+        resolution,
+        has_video: !!tier.hasVideo,
+        price: Number(tier.price) || 0,
+      });
+    }
+    if (variants.length > 0) table[model] = variants;
   }
   return table;
 }
 
-// 按 (model, resolution, hasVideo) 排序，相近档位相邻展示
-function sortRows(rows) {
-  return [...rows].sort((a, b) => {
-    if (a.model !== b.model) return a.model.localeCompare(b.model);
-    if (a.resolution !== b.resolution)
-      return a.resolution.localeCompare(b.resolution);
-    return (a.hasVideo ? 1 : 0) - (b.hasVideo ? 1 : 0);
-  });
+// 保存前校验，返回 null 表示合法
+function validateGroups(groups) {
+  const seenModels = new Set();
+  for (const group of groups) {
+    const model = group.model?.trim();
+    if (!model) return 'empty_model';
+    if (seenModels.has(model)) return 'duplicate_model';
+    seenModels.add(model);
+
+    const seenTiers = new Set();
+    for (const tier of group.tiers) {
+      const resolution = tier.resolution?.trim().toLowerCase();
+      if (!resolution) return 'empty_resolution';
+      if (Number(tier.price) < 0) return 'negative_price';
+      const key = `${resolution}|${tier.hasVideo}`;
+      if (seenTiers.has(key)) return 'duplicate_tier';
+      seenTiers.add(key);
+    }
+  }
+  return null;
 }
 
 export default function VideoPriceSettings({ options }) {
   const { t } = useTranslation();
-  const [rows, setRows] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [mode, setMode] = useState('visual');
   const [jsonText, setJsonText] = useState('');
   const [jsonError, setJsonError] = useState('');
   const [saving, setSaving] = useState(false);
   const [nextId, setNextId] = useState(0);
+  // 倍率计算器（纯前端）
+  const [calcPrice, setCalcPrice] = useState(null);
+  const [calcMarkup, setCalcMarkup] = useState(0);
+  const [calcRate, setCalcRate] = useState(1);
+
+  const VALIDATION_MESSAGES = {
+    duplicate_model: t('模型名称重复'),
+    empty_model: t('模型名称不能为空'),
+    empty_resolution: t('档位分辨率不能为空'),
+    duplicate_tier: t(
+      '档位重复：同一模型下已存在相同分辨率和视频输入标记的档位',
+    ),
+    negative_price: t('价格不能为负数'),
+  };
+
+  const maxIdOf = (gs) =>
+    gs.reduce((acc, g) => Math.max(acc, g.id, ...g.tiers.map((x) => x.id)), -1);
 
   useEffect(() => {
-    const table = parseTable(options?.[OPTION_KEY]);
-    const initial = sortRows(tableToRows(table));
-    setRows(initial);
-    setJsonText(JSON.stringify(table, null, 2));
-    setNextId(initial.length);
+    const parsed = parseTableToGroups(options?.[OPTION_KEY]) ?? [];
+    setGroups(parsed);
+    setJsonText(JSON.stringify(groupsToTable(parsed), null, 2));
+    setNextId(maxIdOf(parsed) + 1);
+    const rate = Number(options?.['USDExchangeRate']);
+    if (rate > 0) setCalcRate(rate);
   }, [options]);
 
-  const syncToJson = (nextRows) => {
-    const next = sortRows(nextRows);
-    setRows(next);
-    setJsonText(JSON.stringify(rowsToTable(next), null, 2));
+  const applyGroups = (next) => {
+    setGroups(next);
+    setJsonText(JSON.stringify(groupsToTable(next), null, 2));
     setJsonError('');
   };
 
   const syncToVisual = (text) => {
     setJsonText(text);
-    try {
-      const parsed = JSON.parse(text);
-      if (typeof parsed !== 'object' || Array.isArray(parsed) || parsed === null) {
-        setJsonError(t('JSON 必须是对象'));
-        return;
-      }
-      const nextRows = tableToRows(parsed);
-      setRows(sortRows(nextRows));
-      setNextId(nextRows.length);
-      setJsonError('');
-    } catch (e) {
-      setJsonError(e.message);
+    const parsed = parseTableToGroups(text);
+    if (parsed === null) {
+      setJsonError(t('JSON 必须是对象'));
+      return;
     }
+    setGroups(parsed);
+    setNextId(maxIdOf(parsed) + 1);
+    setJsonError('');
   };
 
-  const updateRow = (id, field, value) => {
-    syncToJson(rows.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
+  const changeModel = (groupId, model) => {
+    applyGroups(groups.map((g) => (g.id === groupId ? { ...g, model } : g)));
   };
 
-  const addRow = () => {
-    syncToJson([
-      ...rows,
-      { id: nextId, model: '', resolution: '480p', hasVideo: false, price: 0 },
+  const changeTier = (groupId, tierId, field, value) => {
+    applyGroups(
+      groups.map((g) =>
+        g.id === groupId
+          ? {
+              ...g,
+              tiers: g.tiers.map((tier) =>
+                tier.id === tierId ? { ...tier, [field]: value } : tier,
+              ),
+            }
+          : g,
+      ),
+    );
+  };
+
+  const addModel = () => {
+    const groupId = nextId;
+    setNextId(groupId + 3);
+    applyGroups([
+      ...groups,
+      {
+        id: groupId,
+        model: '',
+        tiers: [
+          {
+            id: groupId + 1,
+            resolution: '480p/720p',
+            hasVideo: false,
+            price: 0,
+          },
+          {
+            id: groupId + 2,
+            resolution: '480p/720p',
+            hasVideo: true,
+            price: 0,
+          },
+        ],
+      },
     ]);
-    setNextId((prev) => prev + 1);
   };
 
-  const removeRow = (id) => {
-    syncToJson(rows.filter((r) => r.id !== id));
+  const removeModel = (groupId) => {
+    applyGroups(groups.filter((g) => g.id !== groupId));
   };
 
-  const currentTable = useMemo(() => rowsToTable(rows), [rows]);
+  const addTier = (groupId) => {
+    const tierId = nextId;
+    setNextId(tierId + 1);
+    applyGroups(
+      groups.map((g) =>
+        g.id === groupId
+          ? {
+              ...g,
+              tiers: [
+                ...g.tiers,
+                { id: tierId, resolution: '', hasVideo: false, price: 0 },
+              ],
+            }
+          : g,
+      ),
+    );
+  };
+
+  const removeTier = (groupId, tierId) => {
+    applyGroups(
+      groups.map((g) =>
+        g.id === groupId
+          ? { ...g, tiers: g.tiers.filter((tier) => tier.id !== tierId) }
+          : g,
+      ),
+    );
+  };
+
+  const currentTable = useMemo(() => groupsToTable(groups), [groups]);
 
   const handleSave = async () => {
+    if (mode === 'json' && jsonError) {
+      showError(t('请先修正 JSON 错误再保存'));
+      return;
+    }
+    const error = validateGroups(groups);
+    if (error) {
+      showError(VALIDATION_MESSAGES[error]);
+      return;
+    }
     setSaving(true);
     try {
       const res = await API.put('/api/option/', {
@@ -169,29 +269,16 @@ export default function VideoPriceSettings({ options }) {
     }
   };
 
-  const columns = [
-    {
-      title: t('模型 ID'),
-      dataIndex: 'model',
-      width: 260,
-      render: (text, record) => (
-        <Input
-          value={text}
-          placeholder='doubao-seedance-2-0-260128'
-          onChange={(val) => updateRow(record.id, 'model', val)}
-          style={{ width: '100%' }}
-        />
-      ),
-    },
+  const tierColumns = (group) => [
     {
       title: t('输出分辨率'),
       dataIndex: 'resolution',
-      width: 140,
+      width: 180,
       render: (text, record) => (
         <Input
           value={text}
-          placeholder='1080p / 720p / 480p'
-          onChange={(val) => updateRow(record.id, 'resolution', val)}
+          placeholder='480p/720p'
+          onChange={(val) => changeTier(group.id, record.id, 'resolution', val)}
           style={{ width: '100%' }}
         />
       ),
@@ -199,11 +286,13 @@ export default function VideoPriceSettings({ options }) {
     {
       title: t('含视频输入'),
       dataIndex: 'hasVideo',
-      width: 120,
+      width: 110,
       render: (val, record) => (
         <Checkbox
           checked={val}
-          onChange={(e) => updateRow(record.id, 'hasVideo', e.target.checked)}
+          onChange={(e) =>
+            changeTier(group.id, record.id, 'hasVideo', e.target.checked)
+          }
         >
           {val ? t('是') : t('否')}
         </Checkbox>
@@ -212,13 +301,13 @@ export default function VideoPriceSettings({ options }) {
     {
       title: t('价格（元/百万tokens）'),
       dataIndex: 'price',
-      width: 180,
+      width: 170,
       render: (val, record) => (
         <InputNumber
           value={val}
           min={0}
           step={0.5}
-          onChange={(v) => updateRow(record.id, 'price', v ?? 0)}
+          onChange={(v) => changeTier(group.id, record.id, 'price', v ?? 0)}
           style={{ width: '100%' }}
         />
       ),
@@ -232,90 +321,237 @@ export default function VideoPriceSettings({ options }) {
           type='danger'
           theme='borderless'
           size='small'
-          onClick={() => removeRow(record.id)}
+          onClick={() => removeTier(group.id, record.id)}
         />
       ),
     },
   ];
 
-  return (
-    <div style={{ maxWidth: 900 }}>
-      <Banner
-        type='info'
-        description={
-          <>
-            <div>{t('配置视频模型在不同输出分辨率和视频输入场景下的单价（元/百万tokens）。模型 ID、分辨率、是否含视频输入均可自由增删配置。')}</div>
-            <div style={{ marginTop: 4 }}>
-              {t('计费时取「该档位价格 / 不含视频的最低基准价」作为倍率。')}
-            </div>
-          </>
-        }
-        style={{ marginBottom: 16 }}
-      />
+  // 倍率计算器：倍率 = 目标价 × (1 + 加价率/100) ÷ 2 ÷ 汇率
+  const calcRevenue =
+    calcPrice != null && calcPrice > 0
+      ? calcPrice * (1 + (Number(calcMarkup) || 0) / 100)
+      : null;
+  const calcRatio =
+    calcRevenue != null && calcRate > 0 ? calcRevenue / 2 / calcRate : null;
 
-      <RadioGroup
-        type='button'
-        size='small'
-        value={mode}
-        onChange={(e) => setMode(e.target.value)}
-        style={{ marginBottom: 12 }}
-      >
-        <Radio value='visual'>{t('可视化')}</Radio>
-        <Radio value='json'>JSON</Radio>
-      </RadioGroup>
-
-      {mode === 'visual' ? (
-        <>
-          <Table
-            dataSource={rows}
-            columns={columns}
-            pagination={false}
-            size='small'
-            rowKey='id'
+  const calculatorCard = (
+    <Card
+      title={t('倍率计算器')}
+      style={{ width: 300, flexShrink: 0, position: 'sticky', top: 16 }}
+      headerStyle={{ padding: '12px 16px' }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div>
+          <Text size='small' type='tertiary'>
+            {t('基准档目标价（元/百万tokens）')}
+          </Text>
+          <InputNumber
+            value={calcPrice}
+            min={0}
+            step={1}
+            placeholder='92'
+            onChange={(v) => setCalcPrice(v)}
+            style={{ width: '100%', marginTop: 4 }}
           />
-          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-            <Button icon={<IconPlus />} onClick={addRow}>
-              {t('添加档位')}
-            </Button>
+        </div>
+        <div>
+          <Text size='small' type='tertiary'>
+            {t('加价率（%）')}
+          </Text>
+          <InputNumber
+            value={calcMarkup}
+            step={5}
+            formatter={(v) => `${v}`}
+            onChange={(v) => setCalcMarkup(v ?? 0)}
+            style={{ width: '100%', marginTop: 4 }}
+          />
+        </div>
+        <div>
+          <Text size='small' type='tertiary'>
+            {t('汇率（1 美元兑换人民币）')}
+          </Text>
+          <InputNumber
+            value={calcRate}
+            min={0}
+            step={0.1}
+            onChange={(v) => setCalcRate(v ?? 1)}
+            style={{ width: '100%', marginTop: 4 }}
+          />
+        </div>
+        <div
+          style={{
+            borderTop: '1px solid var(--semi-color-border)',
+            paddingTop: 12,
+          }}
+        >
+          <Text size='small' type='tertiary'>
+            {t('基准倍率')}
+          </Text>
+          <div style={{ fontSize: 28, fontWeight: 600, lineHeight: 1.3 }}>
+            {calcRatio != null ? calcRatio.toFixed(2) : '-'}
           </div>
-        </>
-      ) : (
-        <>
-          <TextArea
-            value={jsonText}
-            onChange={syncToVisual}
-            autosize={{ minRows: 10, maxRows: 30 }}
-            style={{ fontFamily: 'monospace', fontSize: 13 }}
-          />
-          {jsonError && (
-            <Text type='danger' size='small' style={{ display: 'block', marginTop: 4 }}>
-              {jsonError}
+          {calcRevenue != null && (
+            <Text size='small' type='tertiary'>
+              {t('每百万 tokens 实收')} {calcRevenue.toFixed(2)} {t('元')}
             </Text>
           )}
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            <Button
-              icon={<IconCopy />}
-              size='small'
-              theme='borderless'
-              onClick={() => { copy(jsonText, t('JSON')); }}
-            >
-              {t('复制')}
-            </Button>
-          </div>
-        </>
-      )}
-
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
-        <Button
-          theme='solid'
-          type='primary'
-          loading={saving}
-          disabled={mode === 'json' && !!jsonError}
-          onClick={handleSave}
-        >
-          {t('保存视频模型价格')}
-        </Button>
+        </div>
+        <Text size='small' type='tertiary'>
+          {t('把该值填入「模型定价设置」中该模型的倍率即可。')}
+        </Text>
       </div>
+    </Card>
+  );
+
+  return (
+    <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+      <div style={{ flex: 1, minWidth: 0, maxWidth: 900 }}>
+        <Banner
+          type='info'
+          description={
+            <>
+              <div>
+                {t(
+                  '按模型配置视频生成价格：先添加模型，再按输出分辨率和是否含视频输入添加价格档位。',
+                )}
+              </div>
+              <div style={{ marginTop: 4 }}>
+                {t(
+                  '档位价格只决定相对倍率：价格最低的无视频档为基准价（按模型倍率计费），其余档位按价格比例浮动。分辨率支持 480p/720p 组合写法。',
+                )}
+              </div>
+            </>
+          }
+          style={{ marginBottom: 16 }}
+        />
+
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 12,
+            flexWrap: 'wrap',
+            gap: 8,
+          }}
+        >
+          {mode === 'visual' ? (
+            <Button icon={<IconPlus />} onClick={addModel}>
+              {t('添加模型')}
+            </Button>
+          ) : (
+            <span />
+          )}
+          <RadioGroup
+            type='button'
+            size='small'
+            value={mode}
+            onChange={(e) => setMode(e.target.value)}
+          >
+            <Radio value='visual'>{t('可视化')}</Radio>
+            <Radio value='json'>JSON</Radio>
+          </RadioGroup>
+        </div>
+
+        {mode === 'visual' ? (
+          groups.length === 0 ? (
+            <Card>
+              <Text type='tertiary'>{t('未配置视频模型')}</Text>
+            </Card>
+          ) : (
+            groups.map((group) => (
+              <Card
+                key={group.id}
+                style={{ marginBottom: 16 }}
+                headerStyle={{ padding: '12px 16px' }}
+                title={
+                  <div
+                    style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+                  >
+                    <Input
+                      value={group.model}
+                      placeholder={t('模型名称，如 doubao-seedance-2-0')}
+                      onChange={(val) => changeModel(group.id, val)}
+                      style={{ width: 320, fontFamily: 'monospace' }}
+                    />
+                    <Button
+                      icon={<IconDelete />}
+                      type='danger'
+                      theme='borderless'
+                      size='small'
+                      title={t('删除模型')}
+                      onClick={() => removeModel(group.id)}
+                    />
+                  </div>
+                }
+              >
+                <Table
+                  dataSource={group.tiers}
+                  columns={tierColumns(group)}
+                  pagination={false}
+                  size='small'
+                  rowKey='id'
+                  empty={<Text type='tertiary'>{t('暂无档位')}</Text>}
+                />
+                <Button
+                  icon={<IconPlus />}
+                  size='small'
+                  style={{ marginTop: 8 }}
+                  onClick={() => addTier(group.id)}
+                >
+                  {t('添加档位')}
+                </Button>
+              </Card>
+            ))
+          )
+        ) : (
+          <>
+            <TextArea
+              value={jsonText}
+              onChange={syncToVisual}
+              autosize={{ minRows: 10, maxRows: 30 }}
+              style={{ fontFamily: 'monospace', fontSize: 13 }}
+            />
+            {jsonError && (
+              <Text
+                type='danger'
+                size='small'
+                style={{ display: 'block', marginTop: 4 }}
+              >
+                {jsonError}
+              </Text>
+            )}
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <Button
+                icon={<IconCopy />}
+                size='small'
+                theme='borderless'
+                onClick={() => {
+                  copy(jsonText, t('JSON'));
+                }}
+              >
+                {t('复制')}
+              </Button>
+            </div>
+          </>
+        )}
+
+        <div
+          style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}
+        >
+          <Button
+            theme='solid'
+            type='primary'
+            loading={saving}
+            disabled={mode === 'json' && !!jsonError}
+            onClick={handleSave}
+          >
+            {t('保存视频模型价格')}
+          </Button>
+        </div>
+      </div>
+      {calculatorCard}
     </div>
   );
 }
