@@ -16,6 +16,16 @@ func SetVideoRouter(router *gin.Engine) {
 		videoProxyRouter.GET("/videos/:task_id/content", controller.VideoProxy)
 	}
 
+	// Alias under /api/v1: the APIToken frontend proxies dashboard API calls
+	// with the /api prefix preserved, so its video preview requests arrive as
+	// /api/v1/videos/:task_id/content instead of /v1/videos/:task_id/content.
+	apiVideoProxyRouter := router.Group("/api/v1")
+	apiVideoProxyRouter.Use(middleware.RouteTag("relay"))
+	apiVideoProxyRouter.Use(middleware.VideoProxyAuth())
+	{
+		apiVideoProxyRouter.GET("/videos/:task_id/content", controller.VideoProxy)
+	}
+
 	videoV1Router := router.Group("/v1")
 	videoV1Router.Use(middleware.RouteTag("relay"))
 	videoV1Router.Use(middleware.TokenAuth(), middleware.Distribute())
