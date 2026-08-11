@@ -56,10 +56,41 @@ func defaultTableJSON() string {
 // 内部解析
 // ---------------------------------------------------------------------------
 
+// priceVariantJSON 解析用影子结构：兼容历史配置中的 camelCase 键名
+// （"hasVideo" 写错时 json.Unmarshal 不会报错，会静默丢失含视频档位）。
+type priceVariantJSON struct {
+	Resolution     string  `json:"resolution"`
+	HasVideo       *bool   `json:"has_video"`
+	HasVideoLegacy *bool   `json:"hasVideo"`
+	Price          float64 `json:"price"`
+}
+
+func (v priceVariantJSON) normalize() PriceVariant {
+	hasVideo := false
+	if v.HasVideo != nil {
+		hasVideo = *v.HasVideo
+	} else if v.HasVideoLegacy != nil {
+		hasVideo = *v.HasVideoLegacy
+	}
+	return PriceVariant{
+		Resolution: v.Resolution,
+		HasVideo:   hasVideo,
+		Price:      v.Price,
+	}
+}
+
 func parseTable() map[string][]PriceVariant {
-	var table map[string][]PriceVariant
-	if err := json.Unmarshal([]byte(videoPriceSetting.Table), &table); err != nil {
+	var raw map[string][]priceVariantJSON
+	if err := json.Unmarshal([]byte(videoPriceSetting.Table), &raw); err != nil {
 		return nil
+	}
+	table := make(map[string][]PriceVariant, len(raw))
+	for model, variants := range raw {
+		normalized := make([]PriceVariant, len(variants))
+		for i, v := range variants {
+			normalized[i] = v.normalize()
+		}
+		table[model] = normalized
 	}
 	return table
 }
@@ -97,9 +128,10 @@ func GetVideoPriceVariants(modelName string) []PriceVariant {
 // 第二个返回值表示该模型是否配置了价格表；倍率为 1.0 时调用方可忽略该 OtherRatio。
 //
 // 分辨率匹配规则：
-//   - 先做精确匹配（忽略大小写、"1080P" 与 "1080p" 等价权）。
-//   - 请求分辨率与配置档位均可携带任意标签（如 "1080p"、"720p"、"480p"、"2k"），
-//     若请求分辨率没有任何精确匹配，则回退到该模型的不含视频基准档（倍率 1.0）。
+//   - 忽略大小写与首尾空格（"1080P" 与 "1080p" 等价）。
+//   - 配置档位支持 "/" 分隔的组合写法（如 "480p/720p"），请求的 "480p" 或 "720p"
+//     均可命中该档。
+//   - 若请求分辨率没有任何匹配，则回退到该模型的不含视频基准档（倍率 1.0）。
 func GetVideoInputRatio(modelName, resolution string, hasVideo bool) (float64, bool) {
 	table := parseTable()
 	variants, ok := table[modelName]
@@ -119,14 +151,25 @@ func GetVideoInputRatio(modelName, resolution string, hasVideo bool) (float64, b
 		return 0, false
 	}
 
-	// 精确匹配目标档位（分辨率忽略大小写，hasVideo 精确匹配）
+	// 匹配目标档位（分辨率忽略大小写并支持组合档，hasVideo 精确匹配）
 	normResolution := strings.ToLower(strings.TrimSpace(resolution))
 	for _, v := range variants {
-		if strings.EqualFold(v.Resolution, normResolution) && v.HasVideo == hasVideo {
+		if v.HasVideo == hasVideo && resolutionMatches(v.Resolution, normResolution) {
 			return v.Price / basePrice, true
 		}
 	}
 
 	// 未配置的组合按基准价计费
 	return 1.0, true
+}
+
+// resolutionMatches 判断请求分辨率是否命中配置档位。
+// 档位可以是单个值（"720p"）或 "/" 分隔的组合（"480p/720p"）。
+func resolutionMatches(tierResolution, normRequestResolution string) bool {
+	for _, part := range strings.Split(tierResolution, "/") {
+		if strings.ToLower(strings.TrimSpace(part)) == normRequestResolution {
+			return true
+		}
+	}
+	return false
 }
