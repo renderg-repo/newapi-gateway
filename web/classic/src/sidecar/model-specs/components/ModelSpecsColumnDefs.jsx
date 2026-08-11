@@ -20,7 +20,7 @@ For commercial licensing, please contact support@quantumnous.com
 import React from 'react';
 import { Tag, Button, Space, Popconfirm } from '@douyinfe/semi-ui';
 import { IconEdit, IconDelete } from '@douyinfe/semi-icons';
-import { parseCapabilities } from '../utils';
+import { parseCapabilities, getCapabilityLabel } from '../utils';
 
 // 模拟翻译函数
 const defaultT = (key) => {
@@ -94,7 +94,7 @@ export const getModelSpecsColumnDefs = ({ t: propT, onEdit, onDelete }) => {
         return (
           <div className='flex flex-wrap gap-1'>
             {caps.slice(0, 3).map((cap, idx) => (
-              <Tag key={idx} size='small' color='blue'>{cap}</Tag>
+              <Tag key={idx} size='small' color='blue'>{t(getCapabilityLabel(cap))}</Tag>
             ))}
             {caps.length > 3 && <Tag size='small' color='grey'>+{caps.length - 3}</Tag>}
           </div>

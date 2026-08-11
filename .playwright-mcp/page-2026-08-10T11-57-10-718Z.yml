@@ -1,0 +1,54 @@
+- main [ref=f2e3]:
+  - generic [ref=f2e6]:
+    - link [ref=f2e7] [cursor=pointer]:
+      - /url: /
+      - img "arrow-left" [ref=f2e8]
+      - text: 返回首页
+    - link "Logo 星海 Token" [ref=f2e11] [cursor=pointer]:
+      - /url: /
+      - generic [ref=f2e12]:
+        - img "Logo" [ref=f2e13]
+        - generic [ref=f2e14]: 星海 Token
+    - generic [ref=f2e15]:
+      - heading "注册" [level=1] [ref=f2e16]
+      - generic [ref=f2e17]:
+        - generic [ref=f2e18]: 已有账号？
+        - link "去登录" [ref=f2e19] [cursor=pointer]:
+          - /url: /auth/login
+    - generic [ref=f2e21]:
+      - generic [ref=f2e22]:
+        - img "mobile" [ref=f2e24]
+        - textbox "请输入手机号" [ref=f2e27]
+      - generic [ref=f2e28]:
+        - generic [ref=f2e30]:
+          - img "safety" [ref=f2e32]
+          - textbox "请输入图形验证码" [ref=f2e36]
+        - generic [ref=f2e37]:
+          - generic "点击刷新验证码" [ref=f2e38] [cursor=pointer]: 点击获取
+          - button [ref=f2e40] [cursor=pointer]:
+            - img "reload" [ref=f2e41]
+      - generic [ref=f2e44]:
+        - generic [ref=f2e46]:
+          - img "safety" [ref=f2e48]
+          - textbox "验证码" [ref=f2e52]
+        - button "获取验证码" [disabled] [ref=f2e53]
+      - generic [ref=f2e54]:
+        - img "lock" [ref=f2e56]
+        - textbox "设置密码" [ref=f2e59]
+        - button [ref=f2e61] [cursor=pointer]:
+          - img "eye" [ref=f2e62]
+      - generic [ref=f2e66]:
+        - img "lock" [ref=f2e68]
+        - textbox "确认密码" [ref=f2e71]
+        - button [ref=f2e73] [cursor=pointer]:
+          - img "eye" [ref=f2e74]
+      - generic [ref=f2e77] [cursor=pointer]:
+        - checkbox "我已阅读并同意用户协议和隐私政策" [ref=f2e79]
+        - generic [ref=f2e81]:
+          - text: 我已阅读并同意
+          - link "用户协议" [ref=f2e82]:
+            - /url: /terms
+          - text: 和
+          - link "隐私政策" [ref=f2e83]:
+            - /url: /privacy
+      - button "注册" [ref=f2e84] [cursor=pointer]

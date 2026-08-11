@@ -1,0 +1,146 @@
+- generic [ref=f5e2]:
+  - banner [ref=f5e3]:
+    - generic [ref=f5e4]:
+      - link "logo 星海 Token" [ref=f5e5] [cursor=pointer]:
+        - /url: /
+        - img "logo" [ref=f5e6]
+        - generic [ref=f5e7]: 星海 Token
+      - navigation [ref=f5e8]:
+        - link "模型广场" [ref=f5e9] [cursor=pointer]:
+          - /url: /models
+        - link "定价" [ref=f5e10] [cursor=pointer]:
+          - /url: /pricing
+        - link "API 文档" [ref=f5e11] [cursor=pointer]:
+          - /url: https://token.spacehpc.com/docs/
+      - generic [ref=f5e12]:
+        - link "控制台" [ref=f5e13] [cursor=pointer]:
+          - /url: /dashboard
+        - link "登录" [ref=f5e14] [cursor=pointer]:
+          - /url: /auth/login
+  - main [ref=f5e15]:
+    - generic [ref=f5e16]:
+      - complementary [ref=f5e17]:
+        - generic [ref=f5e18]:
+          - generic [ref=f5e19]:
+            - generic [ref=f5e20]: 体验中心
+            - generic [ref=f5e21]:
+              - link [ref=f5e22] [cursor=pointer]:
+                - /url: /dashboard/chat
+                - img "message" [ref=f5e23]
+                - text: 聊天
+              - link [ref=f5e26] [cursor=pointer]:
+                - /url: /dashboard/video
+                - img "video-camera" [ref=f5e27]
+                - text: 视频生成
+          - generic [ref=f5e30]:
+            - generic [ref=f5e31]: 工作台
+            - generic [ref=f5e32]:
+              - link [ref=f5e33] [cursor=pointer]:
+                - /url: /dashboard
+                - img "appstore" [ref=f5e34]
+                - text: 概览
+              - link [ref=f5e37] [cursor=pointer]:
+                - /url: /dashboard/usage
+                - img "line-chart" [ref=f5e38]
+                - text: 消耗日志
+              - link [ref=f5e41] [cursor=pointer]:
+                - /url: /dashboard/tasks
+                - img "file-text" [ref=f5e42]
+                - text: 任务日志
+          - generic [ref=f5e45]:
+            - generic [ref=f5e46]: 管理
+            - generic [ref=f5e47]:
+              - link [ref=f5e48] [cursor=pointer]:
+                - /url: /dashboard/apikeys
+                - img "key" [ref=f5e49]
+                - text: API 密钥
+              - link [ref=f5e52] [cursor=pointer]:
+                - /url: /dashboard/billing
+                - img "wallet" [ref=f5e53]
+                - text: 充值管理
+              - link [ref=f5e56] [cursor=pointer]:
+                - /url: /dashboard/settings
+                - img "setting" [ref=f5e57]
+                - text: 设置
+        - generic [ref=f5e61]:
+          - img "exclamation-circle" [ref=f5e62]
+          - generic [ref=f5e66]:
+            - generic [ref=f5e67]: 余额
+            - generic [ref=f5e68]: ¥0.00
+          - link "充值" [ref=f5e69] [cursor=pointer]:
+            - /url: /dashboard/billing
+      - generic [ref=f5e73]:
+        - generic [ref=f5e74]:
+          - heading "控制台概览" [level=1] [ref=f5e75]
+          - paragraph [ref=f5e76]: 实时监控您的 API 使用情况
+        - generic [ref=f5e77]:
+          - img "loading" [ref=f5e78]
+          - text: 加载数据中...
+        - generic [ref=f5e81]:
+          - generic [ref=f5e84]:
+            - generic [ref=f5e85]:
+              - img "credit-card" [ref=f5e87]
+              - generic [ref=f5e90]: 当前余额
+            - generic [ref=f5e91]: ¥0.00
+          - generic [ref=f5e95]:
+            - generic [ref=f5e96]:
+              - img "rise" [ref=f5e98]
+              - generic [ref=f5e101]: 本月消耗
+            - generic [ref=f5e102]: ¥0.00
+            - generic [ref=f5e104]: 累计消耗
+          - generic [ref=f5e107]:
+            - generic [ref=f5e108]:
+              - img "key" [ref=f5e110]
+              - generic [ref=f5e113]: 活跃 Key 数量
+            - generic [ref=f5e116]:
+              - text: "0"
+              - generic [ref=f5e117]: 个
+        - generic [ref=f5e119]:
+          - generic [ref=f5e120]:
+            - img "calendar" [ref=f5e121]
+            - generic [ref=f5e124]: "时间范围:"
+          - generic [ref=f5e125]:
+            - button "今天" [ref=f5e126] [cursor=pointer]
+            - button "近 7 天" [ref=f5e127] [cursor=pointer]
+            - button "近 30 天" [ref=f5e128] [cursor=pointer]
+            - button "本月" [ref=f5e129] [cursor=pointer]
+          - button [ref=f5e130] [cursor=pointer]:
+            - img "reload" [ref=f5e131]
+            - text: 刷新
+        - generic [ref=f5e134]:
+          - heading "模型分布" [level=3] [ref=f5e137]
+          - generic [ref=f5e142]:
+            - heading "额度使用趋势" [level=3] [ref=f5e143]
+            - img "loading" [ref=f5e144]
+        - generic [ref=f5e150]:
+          - heading "按平台拆分" [level=3] [ref=f5e151]
+          - img "loading" [ref=f5e152]
+        - generic [ref=f5e156]:
+          - generic [ref=f5e157]:
+            - heading "模型性能分析（近 7 天）" [level=3] [ref=f5e158]
+            - img "loading" [ref=f5e159]
+          - generic [ref=f5e162]:
+            - heading "平均响应延迟（秒）" [level=4] [ref=f5e164]
+            - heading "输入 / 输出 Token" [level=4] [ref=f5e167]
+        - generic [ref=f5e169]:
+          - generic [ref=f5e171]:
+            - generic [ref=f5e172]:
+              - heading "最近使用" [level=3] [ref=f5e173]
+              - img "loading" [ref=f5e174]
+            - link [ref=f5e177] [cursor=pointer]:
+              - /url: /dashboard/usage
+              - text: 查看全部
+              - img "right" [ref=f5e178]
+          - generic [ref=f5e182]:
+            - generic [ref=f5e183]:
+              - heading "服务可用性" [level=3] [ref=f5e184]
+              - generic [ref=f5e185]:
+                - img "loading" [ref=f5e186]
+                - button [ref=f5e189] [cursor=pointer]:
+                  - img "reload" [ref=f5e190]
+                  - text: 刷新
+            - generic [ref=f5e194]:
+              - generic [ref=f5e195]: 异常
+              - generic [ref=f5e198]: 正常
+              - generic [ref=f5e201]: 高延迟
+              - generic [ref=f5e204]: 维护中

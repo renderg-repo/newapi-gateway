@@ -1,0 +1,19 @@
+diff --git a/es/Icon/components/IconProvider.js b/es/Icon/components/IconProvider.js
+index 1234567..abcdefg 100644
+--- a/es/Icon/components/IconProvider.js
++++ b/es/Icon/components/IconProvider.js
+@@ -1,5 +1,5 @@
+ 'use client';
+
+-import { createContext, memo, use } from 'react';
++import { createContext, memo, useContext } from 'react';
+ import { jsx as _jsx } from "react/jsx-runtime";
+ export var IconContext = /*#__PURE__*/createContext({});
+ export var IconProvider = /*#__PURE__*/memo(function (_ref) {
+@@ -14,5 +14,5 @@ export var IconProvider = /*#__PURE__*/memo(function (_ref) {
+   });
+ });
+ export var useIconContext = function useIconContext() {
+-  return use(IconContext);
++  return useContext(IconContext);
+ };

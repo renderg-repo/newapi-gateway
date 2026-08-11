@@ -6,11 +6,12 @@ import (
 	"strings"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/model"
 	perfmetrics "github.com/QuantumNous/new-api/pkg/perf_metrics"
-	"github.com/QuantumNous/new-api/relay/channel/task/doubao"
 	sidecarModel "github.com/QuantumNous/new-api/sidecar/model"
 	"github.com/QuantumNous/new-api/setting/ratio_setting"
+	"github.com/QuantumNous/new-api/setting/video_price_setting"
 )
 
 type CatalogModel struct {
@@ -119,15 +120,15 @@ func buildCatalogModel(p model.Pricing, vendorMap map[int]model.PricingVendor) C
 		Icon:                 p.Icon,
 		InputPrice:           inputPrice,
 		OutputPrice:          outputPrice,
-		HasVariablePricing:   doubao.HasVariablePricing(p.ModelName),
+		HasVariablePricing:   video_price_setting.HasVariablePricing(p.ModelName),
 	}
-	if variants := doubao.GetVideoPriceVariants(p.ModelName); len(variants) > 0 {
+	if variants := video_price_setting.GetVideoPriceVariants(p.ModelName); len(variants) > 0 {
 		cm.PriceVariants = make([]PriceVariant, len(variants))
 		for i, v := range variants {
 			cm.PriceVariants[i] = PriceVariant{
 				Resolution: v.Resolution,
 				HasVideo:   v.HasVideo,
-				InputPrice: v.Price * ratio,
+				InputPrice: v.Price * 2 * ratio,
 			}
 		}
 	}
@@ -237,6 +238,12 @@ func GetModelCatalog(vendorFilter string, capabilitiesFilter string) ([]CatalogM
 		specMap[s.ModelName] = s
 	}
 
+	// 预加载渠道类型 → 能力标签映射，用于自动注入
+	autoCaps, err := buildModelAutoCapabilities()
+	if err != nil {
+		return nil, err
+	}
+
 	// 解析能力过滤条件
 	var capFilters []string
 	if capabilitiesFilter != "" {
@@ -251,6 +258,12 @@ func GetModelCatalog(vendorFilter string, capabilitiesFilter string) ([]CatalogM
 		cm := buildCatalogModel(p, vendorMap)
 		if spec, ok := specMap[p.ModelName]; ok {
 			overlaySpec(&cm, spec)
+		}
+
+		// 自动注入渠道派生的能力标签（video, image-generation, audio 等）
+		// model_specs 手动配置的 capabilities 优先级更高，自动注入只做补充
+		if autoCaps[p.ModelName] != nil {
+			injectAutoCapabilities(&cm, autoCaps[p.ModelName])
 		}
 
 		// 按提供商过滤
@@ -306,6 +319,68 @@ func GetModelCatalogByName(modelName string) (*CatalogModel, error) {
 	if err == nil && spec != nil {
 		overlaySpec(&cm, spec)
 	}
+
+	// 自动注入渠道派生的能力标签
+	autoCaps, err := buildModelAutoCapabilities()
+	if err == nil && autoCaps[modelName] != nil {
+		injectAutoCapabilities(&cm, autoCaps[modelName])
+	}
+
 	injectRuntimeMetricSingle(&cm)
 	return &cm, nil
+}
+
+// channelCapabilityMap 渠道类型 → 能力标签映射。
+// 用于根据渠道类型自动推断模型具备的能力。
+var channelCapabilityMap = map[int]string{
+	constant.ChannelTypeKling:       "video",
+	constant.ChannelTypeJimeng:      "video",
+	constant.ChannelTypeVidu:        "video",
+	constant.ChannelTypeDoubaoVideo: "video",
+	constant.ChannelTypeSora:        "video",
+	constant.ChannelTypeReplicate:   "video",
+	constant.ChannelTypeSunoAPI:     "audio",
+}
+
+// buildModelAutoCapabilities 查询所有启用的 abilities，根据渠道类型推断每个模型
+// 自动具备的能力标签（如 video、audio 等）。
+// 返回 map[modelName] → 该模型自动具备的能力标签集合。
+func buildModelAutoCapabilities() (map[string][]string, error) {
+	abilities, err := model.GetAllEnableAbilityWithChannels()
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]map[string]bool)
+	for _, a := range abilities {
+		capTag, ok := channelCapabilityMap[a.ChannelType]
+		if !ok {
+			continue
+		}
+		if result[a.Model] == nil {
+			result[a.Model] = make(map[string]bool)
+		}
+		result[a.Model][capTag] = true
+	}
+	// 转为切片
+	out := make(map[string][]string, len(result))
+	for model, capSet := range result {
+		for c := range capSet {
+			out[model] = append(out[model], c)
+		}
+	}
+	return out, nil
+}
+
+// injectAutoCapabilities 将自动推断的能力标签注入到 CatalogModel 的 Capabilities 中。
+// 只补充 model_specs 未包含的能力，避免覆盖手动配置。
+func injectAutoCapabilities(cm *CatalogModel, autoCaps []string) {
+	existing := make(map[string]bool, len(cm.Capabilities))
+	for _, c := range cm.Capabilities {
+		existing[c] = true
+	}
+	for _, c := range autoCaps {
+		if !existing[c] {
+			cm.Capabilities = append(cm.Capabilities, c)
+		}
+	}
 }

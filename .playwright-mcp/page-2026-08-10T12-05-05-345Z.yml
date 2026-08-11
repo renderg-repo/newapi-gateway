@@ -1,0 +1,142 @@
+- generic [ref=f7e1]:
+  - generic [ref=f7e2]:
+    - banner [ref=f7e3]:
+      - generic [ref=f7e4]:
+        - link "logo 星海 Token" [ref=f7e5] [cursor=pointer]:
+          - /url: /
+          - img "logo" [ref=f7e6]
+          - generic [ref=f7e7]: 星海 Token
+        - navigation [ref=f7e8]:
+          - link "模型广场" [ref=f7e9] [cursor=pointer]:
+            - /url: /models
+          - link "定价" [ref=f7e10] [cursor=pointer]:
+            - /url: /pricing
+          - link "API 文档" [ref=f7e11] [cursor=pointer]:
+            - /url: https://token.spacehpc.com/docs/
+        - generic [ref=f7e12]:
+          - link "控制台" [ref=f7e13] [cursor=pointer]:
+            - /url: /dashboard
+          - button "R Root User" [ref=f7e15] [cursor=pointer]:
+            - generic [ref=f7e16]: R
+            - generic [ref=f7e17]: Root User
+    - main [ref=f7e18]:
+      - generic [ref=f7e19]:
+        - complementary [ref=f7e20]:
+          - generic [ref=f7e21]:
+            - generic [ref=f7e22]:
+              - generic [ref=f7e23]: 体验中心
+              - generic [ref=f7e24]:
+                - link [ref=f7e25] [cursor=pointer]:
+                  - /url: /dashboard/chat
+                  - img "message" [ref=f7e26]
+                  - text: 聊天
+                - link [ref=f7e29] [cursor=pointer]:
+                  - /url: /dashboard/video
+                  - img "video-camera" [ref=f7e30]
+                  - text: 视频生成
+            - generic [ref=f7e33]:
+              - generic [ref=f7e34]: 工作台
+              - generic [ref=f7e35]:
+                - link [ref=f7e36] [cursor=pointer]:
+                  - /url: /dashboard
+                  - img "appstore" [ref=f7e37]
+                  - text: 概览
+                - link [ref=f7e40] [cursor=pointer]:
+                  - /url: /dashboard/usage
+                  - img "line-chart" [ref=f7e41]
+                  - text: 消耗日志
+                - link [ref=f7e44] [cursor=pointer]:
+                  - /url: /dashboard/tasks
+                  - img "file-text" [ref=f7e45]
+                  - text: 任务日志
+            - generic [ref=f7e48]:
+              - generic [ref=f7e49]: 管理
+              - generic [ref=f7e50]:
+                - link [ref=f7e51] [cursor=pointer]:
+                  - /url: /dashboard/apikeys
+                  - img "key" [ref=f7e52]
+                  - text: API 密钥
+                - link [ref=f7e55] [cursor=pointer]:
+                  - /url: /dashboard/billing
+                  - img "wallet" [ref=f7e56]
+                  - text: 充值管理
+                - link [ref=f7e59] [cursor=pointer]:
+                  - /url: /dashboard/settings
+                  - img "setting" [ref=f7e60]
+                  - text: 设置
+        - generic [ref=f7e66]:
+          - generic [ref=f7e67]:
+            - generic [ref=f7e68]:
+              - heading "任务日志" [level=1] [ref=f7e69]
+              - paragraph [ref=f7e70]: 查看和管理异步任务执行记录
+            - generic [ref=f7e72]:
+              - button "今天" [ref=f7e73] [cursor=pointer]
+              - button "本周" [ref=f7e75] [cursor=pointer]
+              - button "本月" [ref=f7e77] [cursor=pointer]
+              - button "近 3 月" [ref=f7e79] [cursor=pointer]
+              - button [ref=f7e81] [cursor=pointer]:
+                - img "calendar" [ref=f7e82]
+                - text: 自定义
+          - generic [ref=f7e85]:
+            - generic [ref=f7e88]:
+              - img "search"
+              - textbox "搜索任务 ID" [ref=f7e89]
+            - generic [ref=f7e90]:
+              - table [ref=f7e92]:
+                - rowgroup [ref=f7e93]:
+                  - row [ref=f7e94]:
+                    - columnheader "提交时间" [ref=f7e95]
+                    - columnheader "结束时间" [ref=f7e96]
+                    - columnheader "花费时间" [ref=f7e97]
+                    - columnheader "平台" [ref=f7e98]
+                    - columnheader "类型" [ref=f7e99]
+                    - columnheader "任务 ID" [ref=f7e100]
+                    - columnheader "任务状态" [ref=f7e101]
+                    - columnheader "进度" [ref=f7e102]
+                    - columnheader "详情" [ref=f7e103]
+                - rowgroup [ref=f7e104]:
+                  - row [ref=f7e105]:
+                    - cell "2026-08-10 17:44:24" [ref=f7e106]
+                    - cell "2026-08-10 17:50:24" [ref=f7e109]
+                    - cell "561.00s" [ref=f7e110]
+                    - cell "豆包视频" [ref=f7e111]
+                    - cell "文生视频时" [ref=f7e113]
+                    - cell "task_dnwLQmXYWy00uo3pxqXoN1OPwkOWiEHN" [ref=f7e115] [cursor=pointer]
+                    - cell "SUCCESS" [ref=f7e116]
+                    - cell "100%" [ref=f7e118]
+                    - cell [ref=f7e123]:
+                      - button "点击预览视频" [active] [ref=f7e124] [cursor=pointer]
+                  - row [ref=f7e125]:
+                    - cell "2026-08-10 09:30:11" [ref=f7e126]
+                    - cell "2026-08-10 09:33:19" [ref=f7e129]
+                    - cell "182.00s" [ref=f7e130]
+                    - cell "豆包视频" [ref=f7e131]
+                    - cell "文生视频时" [ref=f7e133]
+                    - cell "task_fckQWIDvbIB0r2gJ6B7pdUQpFA3v5EnU" [ref=f7e135] [cursor=pointer]
+                    - cell "SUCCESS" [ref=f7e136]
+                    - cell "100%" [ref=f7e138]
+                    - cell [ref=f7e143]:
+                      - button "点击预览视频" [ref=f7e144] [cursor=pointer]
+              - list [ref=f7e146]:
+                - listitem [ref=f7e147]: 共 2 条
+                - listitem "上一页" [ref=f7e148]:
+                  - button [disabled] [ref=f7e149]:
+                    - img "left" [ref=f7e150]
+                - listitem "1" [ref=f7e153] [cursor=pointer]
+                - listitem "下一页" [ref=f7e155]:
+                  - button [disabled] [ref=f7e156]:
+                    - img "right" [ref=f7e157]
+                - listitem [ref=f7e160]:
+                  - generic [ref=f7e161]:
+                    - generic "10 条/页" [ref=f7e162]:
+                      - text: 10 条/页
+                      - combobox "页码" [ref=f7e163]
+                    - img "down" [ref=f7e165]
+          - generic [ref=f7e173]:
+            - button "close 关闭" [ref=f7e174] [cursor=pointer]:
+              - img "close" [ref=f7e175]
+              - generic [ref=f7e178]: 关闭
+            - heading "任务视频 - task_dnwLQmXYWy00uo3pxqXoN1OPwkOWiEHN" [level=2] [ref=f7e180]
+            - generic [ref=f7e181]: 您的浏览器不支持视频播放
+  - alert [ref=f7e168]
+  - generic [ref=f7e169]: "5000"

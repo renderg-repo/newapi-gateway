@@ -80,6 +80,14 @@ const ModelSpecEditModal = ({
     editingSpec?.capabilities ? parseCapabilities(editingSpec.capabilities).length : 0
   );
   const [modelOptions, setModelOptions] = useState([]);
+  const capabilityOptions = useMemo(
+    () =>
+      CAPABILITY_OPTIONS.map((option) => ({
+        ...option,
+        label: t(option.label),
+      })),
+    [t]
+  );
 
   // 弹窗打开时加载已有模型列表
   useEffect(() => {
@@ -95,7 +103,7 @@ const ModelSpecEditModal = ({
 
   const getInitValues = () => ({
     model_name: editingSpec?.model_name || '',
-    context_length: editingSpec?.context_length || '',
+    context_length: editingSpec?.context_length ?? 0,
     capabilities: editingSpec?.capabilities ? parseCapabilities(editingSpec.capabilities) : [],
     release_date: editingSpec?.release_date || '',
     parameter_count: editingSpec?.parameter_count || '',
@@ -114,8 +122,12 @@ const ModelSpecEditModal = ({
     const submitData = {
       ...values,
       id: isEdit ? editingSpec.id : undefined,
+      // 编辑模式下 model_name 字段 disabled，表单不会提交该值，需手动补上
+      model_name: isEdit ? editingSpec.model_name : values.model_name,
       // 后端 ShouldBindJSON 期望 []string，直接传数组
       capabilities: values.capabilities || [],
+      // 后端 ContextLength 为 int，空字符串会导致 JSON 解析失败
+      context_length: Number(values.context_length) || 0,
       status: values.status ? 1 : 0,
     };
     onOk(submitData, isEdit);
@@ -217,10 +229,10 @@ const ModelSpecEditModal = ({
               <Title heading={6} className='mb-0'>{t('规格信息')}</Title>
 
               <div className='grid grid-cols-2 gap-4'>
-                <Form.Input
+                <Form.InputNumber
                   field='context_length'
                   label={t('上下文长度')}
-                  placeholder='128k'
+                  placeholder='128000'
                   style={{ width: '100%' }}
                 />
 
@@ -238,7 +250,7 @@ const ModelSpecEditModal = ({
                 labelExtra={<span className='text-xs text-gray-400'>（{capCount}/5）</span>}
                 direction='horizontal'
                 style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}
-                options={CAPABILITY_OPTIONS}
+                options={capabilityOptions}
               />
             </div>
 

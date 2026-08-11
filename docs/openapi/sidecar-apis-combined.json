@@ -74,8 +74,8 @@
             "in": "query",
             "required": false,
             "schema": { "type": "string" },
-            "description": "按能力标签过滤，多个能力用逗号分隔（AND 关系，模型需同时满足所有指定能力）",
-            "example": "chat,vision,function"
+            "description": "按能力标签过滤，多个能力用逗号分隔（AND 关系，模型需同时满足所有指定能力）。能力标签来源：1) model_specs 手动配置；2) 系统根据渠道类型自动注入（如 video、audio 等）。常见标签：chat, vision, function, streaming, video, audio, image-generation",
+            "example": "video"
           }
         ],
         "responses": {

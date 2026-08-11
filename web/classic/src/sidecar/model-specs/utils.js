@@ -18,17 +18,30 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 // 模型规格能力配置 - Sidecar版本，不依赖主项目utils
+// label 作为 i18n key，渲染时通过 t(label) 取当前语言文案
 export const CAPABILITY_OPTIONS = [
-  { value: 'vision', label: '视觉' },
-  { value: 'reasoning', label: '推理' },
-  { value: 'code', label: '代码' },
-  { value: 'tool-use', label: '工具调用' },
-  { value: 'audio', label: '音频' },
-  { value: 'image', label: '图像' },
-  { value: 'video', label: '视频' },
-  { value: 'search', label: '搜索' },
-  { value: 'long-context', label: '长上下文' },
+  { value: 'vision', label: 'Vision' },
+  { value: 'reasoning', label: 'Reasoning' },
+  { value: 'code', label: 'Code' },
+  { value: 'tool-use', label: 'Tool Use' },
+  { value: 'audio', label: 'Audio' },
+  { value: 'image', label: 'Image' },
+  { value: 'video', label: 'Video' },
+  { value: 'search', label: 'Search' },
+  { value: 'long-context', label: 'Long Context' },
 ];
+
+const CAPABILITY_LABEL_MAP = Object.fromEntries(
+  CAPABILITY_OPTIONS.map((option) => [option.value, option.label])
+);
+
+/**
+ * 将能力值（如 'vision'）转换为 i18n key（如 'Vision'）。
+ * 若未命中已知能力，则原样返回，便于作为兜底显示。
+ */
+export function getCapabilityLabel(value) {
+  return CAPABILITY_LABEL_MAP[value] ?? value;
+}
 
 // 解析模型规格能力
 export function parseCapabilities(capabilitiesStr) {

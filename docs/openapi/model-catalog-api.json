@@ -36,8 +36,8 @@
             "in": "query",
             "required": false,
             "schema": { "type": "string" },
-            "description": "按能力标签过滤，多个能力用逗号分隔（AND 关系，模型需同时满足所有指定能力）",
-            "example": "chat,vision,function"
+            "description": "按能力标签过滤，多个能力用逗号分隔（AND 关系，模型需同时满足所有指定能力）。能力标签来源：1) model_specs 手动配置；2) 系统根据渠道类型自动注入（如 video、audio 等）。常见标签：chat, vision, function, streaming, video, audio, image-generation",
+            "example": "video"
           }
         ],
         "responses": {
@@ -296,7 +296,7 @@
     "schemas": {
       "CatalogModel": {
         "type": "object",
-        "description": "公开接口返回的聚合模型对象，融合 pricing 与 model_spec 数据",
+        "description": "公开接口返回的聚合模型对象，融合 pricing 与 model_spec 数据。capabilities 字段除 model_specs 手动配置外，系统还会根据渠道类型自动注入能力标签（如 video、audio），无需手动标记即可用 ?capabilities=video 查询视频模型。",
         "properties": {
           "model_name": { "type": "string", "example": "gpt-4o" },
           "description": { "type": "string", "example": "OpenAI 最新旗舰模型，多模态能力强大" },
