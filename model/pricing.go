@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"sync"
@@ -339,6 +340,18 @@ func updatePricing() {
 		}
 		pricingMap = append(pricingMap, pricing)
 	}
+
+	// 按模型添加时间倒序排序（新添加的模型排在前面）
+	// 通过 metaMap 中的 Model.CreatedTime 获取添加时间基准，未匹配到元数据的模型排最后
+	sort.SliceStable(pricingMap, func(i, j int) bool {
+		ti, oki := metaMap[pricingMap[i].ModelName]
+		tj, okj := metaMap[pricingMap[j].ModelName]
+		// 无元数据的排最后
+		if !oki || !okj {
+			return oki && !okj
+		}
+		return ti.CreatedTime > tj.CreatedTime
+	})
 
 	// 防止大更新后数据不通用
 	if len(pricingMap) > 0 {
