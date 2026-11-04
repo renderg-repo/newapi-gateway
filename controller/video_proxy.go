@@ -14,6 +14,7 @@ import (
 	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/relay/channel/task/taskcommon"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting/system_setting"
 
@@ -84,47 +85,59 @@ func VideoProxy(c *gin.Context) {
 		return
 	}
 
-	switch channel.Type {
-	case constant.ChannelTypeGemini:
-		apiKey := task.PrivateData.Key
-		if apiKey == "" {
-			logger.LogError(c.Request.Context(), fmt.Sprintf("Missing stored API key for Gemini task %s", taskID))
-			videoProxyError(c, http.StatusInternalServerError, "server_error", "API key not stored for task")
-			return
+	// 优先使用轮询时持久化的抓取模式；历史任务按渠道能力实时推断。
+	mode := task.PrivateData.VideoFetchMode
+	if mode == "" {
+		mode = taskcommon.ResolveVideoFetchMode(channel)
+	}
+
+	switch mode {
+	case model.VideoFetchModeChannelDownload:
+		// 移动云：经代理 /download 解密后转发明文 MP4
+		videoURL = fmt.Sprintf("%s/api/v3/contents/generations/tasks/%s/download",
+			baseURL,
+			task.GetUpstreamTaskID(),
+		)
+		// model 需与创建任务时一致（移动云模型名，即映射后的 upstream model），
+		// 代理按 api_key+model 复用 Client；为空时由代理使用默认模型
+		if upModel := task.Properties.UpstreamModelName; upModel != "" {
+			videoURL += "?model=" + url.QueryEscape(upModel)
 		}
-		videoURL, err = getGeminiVideoURL(channel, task, apiKey)
-		if err != nil {
-			logger.LogError(c.Request.Context(), fmt.Sprintf("Failed to resolve Gemini video URL for task %s: %s", taskID, err.Error()))
-			videoProxyError(c, http.StatusBadGateway, "server_error", "Failed to resolve Gemini video URL")
-			return
-		}
-		req.Header.Set("x-goog-api-key", apiKey)
-	case constant.ChannelTypeVertexAi:
-		videoURL, err = getVertexVideoURL(channel, task)
-		if err != nil {
-			logger.LogError(c.Request.Context(), fmt.Sprintf("Failed to resolve Vertex video URL for task %s: %s", taskID, err.Error()))
-			videoProxyError(c, http.StatusBadGateway, "server_error", "Failed to resolve Vertex video URL")
-			return
-		}
-	case constant.ChannelTypeOpenAI, constant.ChannelTypeSora:
+		req.Header.Set("Authorization", "Bearer "+channel.Key)
+	case model.VideoFetchModeDirectURL:
+		// 直连上游：ResultURL 只保存真实 TOS/CDN 地址
+		videoURL = task.GetResultURL()
+	case model.VideoFetchModeProviderContent:
+		// OpenAI / Sora：按上游 task ID 构造 content 接口
 		videoURL = fmt.Sprintf("%s/v1/videos/%s/content", baseURL, task.GetUpstreamTaskID())
 		req.Header.Set("Authorization", "Bearer "+channel.Key)
-	case constant.ChannelTypeDoubaoVideo:
-		if isMobileCloudBaseURL(baseURL) {
-			// 移动云：经代理 /download 解密后转发明文 MP4
-			videoURL = fmt.Sprintf("%s/api/v3/contents/generations/tasks/%s/download",
-				baseURL,
-				task.GetUpstreamTaskID(),
-			)
-			// model 需与创建任务时一致（移动云模型名，即映射后的 upstream model），
-			// 代理按 api_key+model 复用 Client；为空时由代理使用默认模型
-			if upModel := task.Properties.UpstreamModelName; upModel != "" {
-				videoURL += "?model=" + url.QueryEscape(upModel)
+	case model.VideoFetchModeProviderResolve:
+		switch channel.Type {
+		case constant.ChannelTypeGemini:
+			apiKey := task.PrivateData.Key
+			if apiKey == "" {
+				logger.LogError(c.Request.Context(), fmt.Sprintf("Missing stored API key for Gemini task %s", taskID))
+				videoProxyError(c, http.StatusInternalServerError, "server_error", "API key not stored for task")
+				return
 			}
-			req.Header.Set("Authorization", "Bearer "+channel.Key)
-		} else {
-			// 直连火山：原逻辑，直接转发 GetResultURL
-			videoURL = task.GetResultURL()
+			videoURL, err = getGeminiVideoURL(channel, task, apiKey)
+			if err != nil {
+				logger.LogError(c.Request.Context(), fmt.Sprintf("Failed to resolve Gemini video URL for task %s: %s", taskID, err.Error()))
+				videoProxyError(c, http.StatusBadGateway, "server_error", "Failed to resolve Gemini video URL")
+				return
+			}
+			req.Header.Set("x-goog-api-key", apiKey)
+		case constant.ChannelTypeVertexAi:
+			videoURL, err = getVertexVideoURL(channel, task)
+			if err != nil {
+				logger.LogError(c.Request.Context(), fmt.Sprintf("Failed to resolve Vertex video URL for task %s: %s", taskID, err.Error()))
+				videoProxyError(c, http.StatusBadGateway, "server_error", "Failed to resolve Vertex video URL")
+				return
+			}
+		default:
+			logger.LogError(c.Request.Context(), fmt.Sprintf("Unsupported provider_resolve channel type %d for task %s", channel.Type, taskID))
+			videoProxyError(c, http.StatusInternalServerError, "server_error", "Unsupported video channel type")
+			return
 		}
 	default:
 		// Video URL is stored in PrivateData.ResultURL (fallback to FailReason for old data)
@@ -147,9 +160,9 @@ func VideoProxy(c *gin.Context) {
 	}
 
 	fetchSetting := system_setting.GetFetchSetting()
-	// 对于 Doubao 移动云渠道，URL 由渠道 base_url 构造（内部代理），
+	// channel_download 的 URL 由渠道 base_url 构造（内部代理），
 	// 不来自用户输入，不需要 SSRF 校验。
-	if channel.Type != constant.ChannelTypeDoubaoVideo || !isMobileCloudBaseURL(baseURL) {
+	if mode != model.VideoFetchModeChannelDownload {
 		if err := common.ValidateURLWithFetchSetting(videoURL, fetchSetting.EnableSSRFProtection, fetchSetting.AllowPrivateIp, fetchSetting.DomainFilterMode, fetchSetting.IpFilterMode, fetchSetting.DomainList, fetchSetting.IpList, fetchSetting.AllowedPorts, fetchSetting.ApplyIPFilterForDomain); err != nil {
 			logger.LogError(c.Request.Context(), fmt.Sprintf("Video URL blocked for task %s: %v", taskID, err))
 			videoProxyError(c, http.StatusForbidden, "server_error", fmt.Sprintf("request blocked: %v", err))
@@ -223,9 +236,4 @@ func writeVideoDataURL(c *gin.Context, dataURL string) error {
 	c.Writer.WriteHeader(http.StatusOK)
 	_, err = c.Writer.Write(videoBytes)
 	return err
-}
-
-// isMobileCloudBaseURL 判断渠道 baseURL 是否为移动云加密代理（含 /aicc/ 前缀）
-func isMobileCloudBaseURL(baseURL string) bool {
-	return strings.Contains(baseURL, "/aicc/")
 }

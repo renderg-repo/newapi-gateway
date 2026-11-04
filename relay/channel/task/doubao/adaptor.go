@@ -340,7 +340,8 @@ func (a *TaskAdaptor) ParseTaskResult(respBody []byte) (*relaycommon.TaskInfo, e
 			// 直连火山：直接保存 TOS 预签名 URL
 			taskResult.Url = resTask.Content.VideoURL
 		}
-		// 移动云：Url 留空 → 轮询回退到 BuildProxyURL（经代理 /download 解密）
+		// 移动云：Url 留空，由 video_fetch_mode=channel_download 驱动
+		// VideoProxy 走渠道 /download 解密；不再写入网关自身 URL。
 		// 解析 usage 信息用于按倍率计费
 		taskResult.CompletionTokens = resTask.Usage.CompletionTokens
 		taskResult.TotalTokens = resTask.Usage.TotalTokens
