@@ -464,13 +464,12 @@ func tryRealtimeFetch(task *model.Task, isOpenAIVideoAPI bool) []byte {
 	if ti.Progress != "" {
 		task.Progress = ti.Progress
 	}
-	if strings.HasPrefix(ti.Url, "data:") {
-		// data: URI — kept in Data, not ResultURL
-	} else if ti.Url != "" {
+	task.PrivateData.VideoFetchMode = taskcommon.ResolveVideoFetchMode(channelModel)
+	if ti.Url != "" && !strings.HasPrefix(ti.Url, "data:") {
 		task.PrivateData.ResultURL = ti.Url
 	} else if task.Status == model.TaskStatusSuccess {
-		// No URL from adaptor — construct proxy URL using public task ID
-		task.PrivateData.ResultURL = taskcommon.BuildProxyURL(task.TaskID)
+		// data: URI stays in the upstream payload; never persist a self-proxy URL.
+		task.PrivateData.ResultURL = ""
 	}
 
 	if !snap.Equal(task.Snapshot()) {
@@ -490,7 +489,7 @@ func tryRealtimeFetch(task *model.Task, isOpenAIVideoAPI bool) []byte {
 		"metadata": nil,
 		"status":   mapTaskStatusToSimple(task.Status),
 		"task_id":  task.TaskID,
-		"url":      task.GetResultURL(),
+		"url":      publicTaskResultURL(task),
 	}
 	respBody, _ := common.Marshal(dto.TaskResponse[any]{
 		Code: "success",
@@ -552,7 +551,7 @@ func TaskModel2Dto(task *model.Task) *dto.TaskDto {
 		Action:     task.Action,
 		Status:     string(task.Status),
 		FailReason: task.FailReason,
-		ResultURL:  task.GetResultURL(),
+		ResultURL:  publicTaskResultURL(task),
 		SubmitTime: task.SubmitTime,
 		StartTime:  task.StartTime,
 		FinishTime: task.FinishTime,
@@ -561,4 +560,45 @@ func TaskModel2Dto(task *model.Task) *dto.TaskDto {
 		Username:   task.Username,
 		Data:       task.Data,
 	}
+}
+
+// publicTaskResultURL returns the externally visible result URL.
+// PrivateData.ResultURL keeps the real upstream address (or stays empty for
+// proxy-driven modes); the public field keeps pointing at the gateway content
+// endpoint whenever the browser preview must go through VideoProxy.
+func publicTaskResultURL(task *model.Task) string {
+	if task == nil {
+		return ""
+	}
+	upstreamURL := task.GetResultURL()
+	if task.Platform == constant.TaskPlatformSuno || task.Platform == constant.TaskPlatformMidjourney {
+		return upstreamURL
+	}
+	if task.Status != model.TaskStatusSuccess {
+		return upstreamURL
+	}
+	switch task.PrivateData.VideoFetchMode {
+	case model.VideoFetchModeChannelDownload,
+		model.VideoFetchModeProviderContent,
+		model.VideoFetchModeProviderResolve:
+		return taskcommon.BuildProxyURL(task.TaskID)
+	case model.VideoFetchModeDirectURL:
+		// Doubao direct previously stored a self-proxy URL; keep the public
+		// field on the gateway endpoint so existing preview clients still work.
+		if isDoubaoVideoTask(task) {
+			return taskcommon.BuildProxyURL(task.TaskID)
+		}
+		return upstreamURL
+	default:
+		// Legacy tasks (no mode). Doubao always stored the proxy URL; other
+		// channels may legitimately expose an upstream URL.
+		if upstreamURL == "" || isDoubaoVideoTask(task) {
+			return taskcommon.BuildProxyURL(task.TaskID)
+		}
+		return upstreamURL
+	}
+}
+
+func isDoubaoVideoTask(task *model.Task) bool {
+	return string(task.Platform) == strconv.Itoa(constant.ChannelTypeDoubaoVideo)
 }
