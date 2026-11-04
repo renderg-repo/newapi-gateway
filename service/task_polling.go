@@ -439,18 +439,32 @@ func updateVideoSingleTask(ctx context.Context, adaptor TaskPollingAdaptor, ch *
 		if task.FinishTime == 0 {
 			task.FinishTime = now
 		}
-		if strings.HasPrefix(taskResult.Url, "data:") {
-			// data: URI (e.g. Vertex base64 encoded video) — keep in Data, not in ResultURL
-			task.PrivateData.ResultURL = taskcommon.BuildProxyURL(task.TaskID)
-		} else if taskResult.Url != "" && ch.Type == constant.ChannelTypeDoubaoVideo {
-			// 移动云 (豆包) 视频: 上游 CDN 返回 AES-256 加密的 binary/octet-stream，浏览器 <video> 无法直接解码。改用代理 URL 走网关中转。
-			task.PrivateData.ResultURL = taskcommon.BuildProxyURL(task.TaskID)
-		} else if taskResult.Url != "" {
-			// Direct upstream URL (e.g. Kling, Ali, Doubao, etc.)
-			task.PrivateData.ResultURL = taskResult.Url
-		} else {
-			// No URL from adaptor — construct proxy URL using public task ID
-			task.PrivateData.ResultURL = taskcommon.BuildProxyURL(task.TaskID)
+		// Persist the fetch strategy alongside the result. ResultURL must only
+		// ever hold a real upstream URL; the proxy URL is derived at read time.
+		mode := taskcommon.ResolveVideoFetchMode(ch)
+		task.PrivateData.VideoFetchMode = mode
+		switch mode {
+		case model.VideoFetchModeDirectURL:
+			// Doubao direct: upstream TOS URL. data: URIs stay in Data.
+			if taskResult.Url != "" && !strings.HasPrefix(taskResult.Url, "data:") {
+				task.PrivateData.ResultURL = taskResult.Url
+			} else {
+				task.PrivateData.ResultURL = ""
+			}
+		case model.VideoFetchModeChannelDownload:
+			// Mobile-cloud /aicc/: VideoProxy builds the download URL from the
+			// channel base URL. Never persist a self-proxy URL here.
+			task.PrivateData.ResultURL = ""
+		case model.VideoFetchModeProviderContent, model.VideoFetchModeProviderResolve:
+			// Keep an upstream URL when the adaptor supplied one; otherwise the
+			// mode alone drives VideoProxy (provider content/resolve).
+			if taskResult.Url != "" && !strings.HasPrefix(taskResult.Url, "data:") {
+				task.PrivateData.ResultURL = taskResult.Url
+			} else {
+				task.PrivateData.ResultURL = ""
+			}
+		default:
+			task.PrivateData.ResultURL = ""
 		}
 		shouldSettle = true
 	case model.TaskStatusFailure:
