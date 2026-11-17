@@ -1,8 +1,9 @@
 # 20261117-0307-caf2-试合并上游-new-api-最新版并评估冲突: 试合并上游 new-api 最新版并评估冲突
 
 - **Tags**: 上游同步, worktree, 冲突评估
-- **Status**: doing · 2026-11-17 05:40:16 · @test · 0f55b754-ef6e-4a8b-a660-a84ba503773e
+- **Status**: cancelled · 2026-11-17 05:42:39 · @test · 0f55b754-ef6e-4a8b-a660-a84ba503773e
 - **Created**: 2026-11-17 03:07:21 · @test · 0f55b754-ef6e-4a8b-a660-a84ba503773e
+- **Sealed**: 2026-11-17 05:42:39 · @test · 0f55b754-ef6e-4a8b-a660-a84ba503773e
 
 <!-- Header lines are maintained by the script, fixed order: Tags → Status → Created → Sealed.
      The `- **Tags**: …` line is inserted at the top by new --tags; omitted when there are no tags
@@ -75,3 +76,4 @@ cd .worktrees/upstream-merge && git merge --no-commit --no-ff QuantumNous/main  
 - 2026-11-17 03:08:13 · log · @test · 0f55b754-ef6e-4a8b-a660-a84ba503773e · 真实试合并完成：.worktrees/upstream-merge 停在 74 个未合并路径（冲突块 70，go.sum 占 25）；classic 23 文件全是上游删除类，0 冲突块
 - 2026-11-17 03:20:16 · log · @test · 0f55b754-ef6e-4a8b-a660-a84ba503773e · 收益评估：上游 985 提交=472 fix/248 feat，视频任务插件化+分档定价、审计日志、多节点同步是实收益；wechat/sms/model spec 关键词 0 命中仍为自研独有；本 fork TASK_TIMEOUT_MINUTES 默认 1440 vs 上游 4320
 - 2026-11-17 05:40:16 · log · @test · 0f55b754-ef6e-4a8b-a660-a84ba503773e · 用户决定不升级（收益不足）；已解 69/74 冲突，后端 25 个全解、go build 只剩 sidecar/model_catalog.go:159 与 service/hook.go:58 两处 API 适配，worktree 保留为暂停态未提交
+- 2026-11-17 05:42:39 · cancel · @test · 0f55b754-ef6e-4a8b-a660-a84ba503773e · cancelled: 用户决定不升级：上游 985 提交的收益不足以抵消前端双主题归一与视频链路改插件的重写成本；试合并已解 74 冲突中的 69 个，成果留在 sync/upstream-20261117 分支与 .worktrees/upstream-merge（未提交）
