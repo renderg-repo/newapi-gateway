@@ -1,0 +1,7 @@
+{
+  "identity": {"uuid": "0f55b754-ef6e-4a8b-a660-a84ba503773e"},
+  "tasks": {
+    "20261117-0307-caf2-试合并上游-new-api-最新版并评估冲突": {"category": "调研评估", "created": "2026-11-17 03:07:21", "creator": "0f55b754-ef6e-4a8b-a660-a84ba503773e", "creator_name": "test", "finished": null, "owner": "0f55b754-ef6e-4a8b-a660-a84ba503773e", "owner_name": "test", "started": "2026-11-17 03:07:21", "status": "doing", "tags": ["上游同步", "worktree", "冲突评估"], "title": "试合并上游 new-api 最新版并评估冲突", "updated": "2026-11-17 03:07:21", "worklog": "worklog/202611/17-0307-caf2-试合并上游-new-api-最新版并评估冲突.md"}
+  },
+  "version": "20261022000000"
+}
